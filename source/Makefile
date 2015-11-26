@@ -1,31 +1,15 @@
-CC=gcc
-CFLAGS= -g -O0 -fopenmp -Wformat-security -std=gnu11 -pedantic
-LDFLAGS= -g -fopenmp
-SRC_PRO=main.c
-SRC_GEN=graph_ge.c
-OBJ_GEN=$(SRC_GEN:.c=.o)
-OBJ_PRO=$(SRC_PRO:.c=.o)
-EXE_PRO=program
-EXE_GEN=generator
+SUBDIRS := $(wildcard */.)
 
+.PHONY: $(SUBDIRS)
+.SILENT:
 
+all: TARGET=all
+clean: TARGET=clean
+clobber: TARGET=clobber
+install: TARGET=install
+uninstall: TARGET=uninstall
 
-all: $(EXE_GEN) $(EXE_PRO)
+all clean clobber install uninstall : $(SUBDIRS)
 
-install:
-	@cp $(EXE_GEN) $(EXE_PRO) $(OUTDIR)
-    
-$(EXE_GEN): $(OBJ_GEN) 
-	@$(CC) $(LDFLAGS) $(OBJ_GEN) -o $@
-
-$(EXE_PRO): $(OBJ_PRO) 
-	@$(CC) $(LDFLAGS) $(OBJ_PRO) -o $@
-
-.cpp.o:
-	@$(CC) $(CFLAGS) $< -o $@
-
-clean:
-	@rm -f $(OBJ_GEN) $(OBJ_PRO)
-
-clobber:
-	@rm -f $(OBJ_GEN) $(OBJ_PRO) $(EXE_GEN) $(EXE_BIN)
+$(SUBDIRS):
+	@exec $(MAKE) -C $@ $(TARGET)
