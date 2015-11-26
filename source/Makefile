@@ -1,10 +1,10 @@
 CC=gcc
-CFLAGS=-c -Wall
-LDFLAGS=
+CFLAGS= -g -O0 -fopenmp
+LDFLAGS= -g -fopenmp
 SOURCES=main.c
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=program
-OUTDIR=../build
+
 
 
 all: $(SOURCES) $(EXECUTABLE)
@@ -22,4 +22,4 @@ clean:
 	@rm -f *.o
 
 clobber:
-	@rm -f *.o program
+	@rm -f *.o $(EXECUTABLE)
