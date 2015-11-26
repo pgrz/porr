@@ -1,28 +1,32 @@
-
 CC=gcc
-CFLAGS= -g -O0 -fopenmp -Wformat-security -std=gnu11 -pedantic
-LDFLAGS= -g -fopenmp
+CFLAGS:= 
+LDFLAGS:=
 
 OBJ=$(SRC:.c=.o)
 
 OUTDIR=../../build
 
 all : $(EXE)
+	$(info make $@ for $(EXE)...)
 
 $(EXE) : $(OBJ) 
-	@$(CC) $(LDFLAGS) $(OBJ) -o $@
+	@$(CC) $(OBJ) $(LDFLAGS) -o $@
 
 .cpp.o:
 	@$(CC) $(CFLAGS) $< -o $@
 
 clean:
+	$(info make $@ for $(EXE)...)
 	@rm -f $(OBJ)
 
 clobber:
+	$(info make $@ for $(EXE)...)
 	@rm -f $(OBJ) $(EXE)
 
 install:
+	$(info make $@ for $(EXE)...)
 	@cp $(EXE) $(OUTDIR)
 
 uninstall:
+	$(info make $@ for $(EXE)...)
 	@rm -f $(OUTDIR)/$(EXE)
