@@ -2,26 +2,26 @@ CC=gcc
 CFLAGS:= 
 LDFLAGS:=
 
-OBJ=$(SRC:.c=.o)
+OBJS=$(SRCS:.c=.o)
 
 OUTDIR=../../build
 
 all : $(EXE)
 	$(info make $@ for $(EXE)...)
 
-$(EXE) : $(OBJ) 
-	@$(CC) $(OBJ) $(LDFLAGS) -o $@
+$(EXE) : $(OBJS)
+	@$(CC) $^ $(LDFLAGS) -o $@
 
-.cpp.o:
-	@$(CC) $(CFLAGS) $< -o $@
+%.o : %.c $(DEPS)
+	@$(CC) $(CFLAGS) -c $<
 
 clean:
 	$(info make $@ for $(EXE)...)
-	@rm -f $(OBJ)
+	@rm -f $(OBJS)
 
 clobber:
 	$(info make $@ for $(EXE)...)
-	@rm -f $(OBJ) $(EXE)
+	@rm -f $(OBJS) $(EXE)
 
 install:
 	$(info make $@ for $(EXE)...)
