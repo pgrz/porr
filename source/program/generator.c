@@ -37,7 +37,7 @@ void random_graph()
         }
     }
 
-    free( adj_matrix );
+//    free( adj_matrix );
 }
 
 void print_graph()
@@ -46,9 +46,9 @@ void print_graph()
 
     printf( "%d\t%d\n", vertex_count, edge_count );
 
-    for ( i = 1; i < vertex_count; i++ )
-        for ( j = i + 1; j <= vertex_count; j++ ) {
-            index = ( i - 1 ) * vertex_count + j - 1;
+    for ( i = 0; i < vertex_count; i++ )
+        for ( j = i + 1; j < vertex_count; j++ ) {
+            index = i  * vertex_count + j ;
             if ( adj_matrix[ index ] )
                 printf( "%d\t%d\t%d\n", i, j, adj_matrix[ index ] );
         }
