@@ -2,39 +2,44 @@
 #include <string.h>
 #include <stdlib.h>
 
-void fix_imbalanced_graph( void );
-void print_graph( 
-                  
-                  int* adj_matrix);
+void print_graph();
 void random_graph();
-
-int ran( int k );     /* customized random number generator */
 
 int      edge_count=20;
 int      vertex_count=10;
 int      max_weight=20;
+int      max_edges=0;
+int     *adj_matrix;
 
 int main()
 {
+    //Seed init
     srand( ( unsigned short ) time( NULL ) );
 
-    fix_imbalanced_graph();
-    random_graph();
-    return 0;
-}
-
-void fix_imbalanced_graph( void )
-{
-    int  max_edges;
-
+    //Fix imbalanced graph
     max_edges = (vertex_count * ( vertex_count - 1 )) / 2;
-    if (edge_count > max_edges)
-        edge_count = max_edges;
+    edge_count = (edge_count > max_edges) ?  max_edges : edge_count;
+
+    //Generate
+    random_graph();
+
+    //Print it
+    if(adj_matrix != 0)
+    {
+        print_graph();
+    }
+    else
+    {
+        printf("Graph not generated!\n");
+    }
+
+    return 0;
 }
 
 void random_graph()
 {
-    int i, j, count, index, *adj_matrix, temp;
+    int i, j, count, index, temp;
+    return;
 
     if ( ( adj_matrix = ( int * ) calloc( vertex_count * vertex_count, sizeof( int ) ) )
             == NULL ) {
@@ -43,8 +48,8 @@ void random_graph()
     }
 
     for ( count = 0; count < edge_count; ) {
-        i = ran( vertex_count );
-        j = ran( vertex_count );
+        i = rand()%vertex_count;
+        j = rand()%vertex_count;
 
         if ( i == j )
             continue;
@@ -58,21 +63,15 @@ void random_graph()
 
         index = i * vertex_count + j;
         if ( !adj_matrix[ index ] ) {
-            adj_matrix[ index ] = 1 + ran( max_weight );
+            adj_matrix[ index ] = 1 + rand()%max_weight;
             count++;
         }
     }
-    print_graph( adj_matrix);
 
     free( adj_matrix );
 }
 
-int ran(int k)
-{
-    return rand() % k;
-}
-
-void print_graph(int* adj_matrix)
+void print_graph()
 {
     int i, j, index;
 
