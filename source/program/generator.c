@@ -1,4 +1,7 @@
 #include "generator.h"
+#include "utils.h"
+
+#include <limits.h>
 
 int      edge_count=20;
 int      vertex_count=10;
@@ -9,7 +12,6 @@ int     *adj_matrix;
 void random_graph()
 {
     int i, j, count, index, temp;
-    int i4_huge = 2147483647;
 
     if ( ( adj_matrix = ( int * ) calloc( vertex_count * vertex_count, sizeof( int ) ) )
             == NULL ) {
@@ -19,15 +21,18 @@ void random_graph()
 
     for(i=0; i<vertex_count;i++)
         for(j=0;j<vertex_count;j++)
-            adj_matrix[i * vertex_count + j] = i4_huge;
+            adj_matrix[i * vertex_count + j] = INT_MAX;
 
     for ( count = 0; count < edge_count; ) {
         i = rand()%vertex_count;
         j = rand()%vertex_count;
 
         if ( i == j )
+        {
+            adj_matrix[i * vertex_count + j] = 0;
             continue;
-
+        }
+            
         if ( i > j )
         {
             temp = i;
@@ -36,7 +41,8 @@ void random_graph()
         }
 
         index = i * vertex_count + j;
-        if ( adj_matrix[ index ] == i4_huge ) {
+
+        if ( adj_matrix[ index ] == INT_MAX ) {
             adj_matrix[ index ] = 1 + rand()%max_weight;
             count++;
         }
@@ -49,12 +55,16 @@ void print_graph()
 {
     int i, j, index;
 
-    printf( "%d\t%d\n", vertex_count, edge_count );
+    log(-1,  "Vertices: %d", vertex_count);
+    log(-1,  "Edges:    %d", edge_count );
+    log(-1,  "------------");
 
     for ( i = 0; i < vertex_count; i++ )
-        for ( j = i + 1; j < vertex_count; j++ ) {
+        for ( j = 0; j < vertex_count; j++ )
+        {
+            if(i==j) continue;
             index = i  * vertex_count + j ;
-            if ( adj_matrix[ index ] )
-                printf( "%d\t%d\t%d\n", i, j, adj_matrix[ index ] );
+            if ( adj_matrix[ index ] != INT_MAX )
+            log(-1, "%d --- %d : %d", i, j, adj_matrix[ index ] );
         }
 }

@@ -1,6 +1,8 @@
 #include "auction.h"
 #include "utils.h"
 
+#include <limits.h>
+
 void add_node(AuctionPath *ap, int node_id) {
     AuctionPathNode *current_last_node = ap->last;
     AuctionPathNode *new_node = malloc(sizeof(AuctionPathNode));
@@ -76,7 +78,7 @@ int *auction_distance (int adj[vertex_count][vertex_count], int destination_node
     /* wektor kosztów */
     int *price_v;
     int i;
-    int i4_huge = 2147483647;
+
     /* minimalne odległości od wybranego węzła do całej reszty */
     int *mind;
 

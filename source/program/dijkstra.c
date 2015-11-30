@@ -1,11 +1,12 @@
 #include "dijkstra.h"
 #include "utils.h"
 
+#include <limits.h>
+
 int *dijkstra_distance ( int ohd[vertex_count][vertex_count]  )
 {
     int *connected;
     int i;
-    int i4_huge = 2147483647;
     int md;
     int *mind;
     int mv;
@@ -64,7 +65,7 @@ int *dijkstra_distance ( int ohd[vertex_count][vertex_count]  )
              */
             # pragma omp single
             {
-                md = i4_huge;
+                md = INT_MAX;
                 mv = -1;
             }
             /*
@@ -144,9 +145,8 @@ void find_nearest ( int s, int e, int mind[vertex_count], int connected[vertex_c
                     int *v, int my_id )
 {
     int i;
-    int i4_huge = 2147483647;
 
-    *d = i4_huge;
+    *d = INT_MAX;
     *v = -1;
     log(my_id, "P%d: initial distance: %d, initial closest: %d", my_id, *d, *v);
 
@@ -166,7 +166,6 @@ void update_mind ( int s, int e, int mv, int connected[vertex_count], int ohd[ve
                    int mind[vertex_count], int my_id )
 {
     int i;
-    int i4_huge = 2147483647;
 
     log(my_id, "P%d: updating mind", my_id);
 
@@ -174,7 +173,7 @@ void update_mind ( int s, int e, int mv, int connected[vertex_count], int ohd[ve
     {
         if ( !connected[i] )
         {
-            if ( ohd[mv][i] < i4_huge )
+            if ( ohd[mv][i] < INT_MAX )
             {
                 if ( mind[mv] + ohd[mv][i] < mind[i] )
                 {

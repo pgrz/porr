@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <limits.h>
 
 #include "utils.h"
 #include "generator.h"
@@ -15,6 +16,9 @@ void usage(void)
 int main (int argc, char **argv )
 {
     int *mind;
+    clock_t beg, end;
+    double time_spent;
+    int last, dist;
 
     if (argc != 4)
     {
@@ -34,8 +38,6 @@ int main (int argc, char **argv )
 
     random_graph();
 
-    clock_t beg, end;
-    double time_spent;
 
     if(adj_matrix != 0)
     {
@@ -47,8 +49,18 @@ int main (int argc, char **argv )
         time_spent = (double)(end - beg) / CLOCKS_PER_SEC;
 
         log(-1, "Execution time: %f s", time_spent);
+        
+        last=vertex_count - 1;
+        dist=mind[last];
 
-        log(-1, "Minimum distance from node 0 to node %d equals %d", vertex_count - 1, mind[vertex_count - 1]);
+        if (dist != INT_MAX)
+        {
+            log(-1, "Minimum distance from node 0 to node %d equals %d", last, dist);
+        }
+        else
+        {
+            log(-1, "Can't reach node %d from node 0!", last);
+        }
 
         free ( mind );
     }
