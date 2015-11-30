@@ -6,6 +6,8 @@
 #include "dijkstra.h"
 #include "auction.h"
 
+int connected=0;
+
 typedef enum {
 AUCTION, DIJKSTRA
 } Algorithm;
@@ -15,7 +17,6 @@ void usage(void)
     log(INFO, -1, "Usage: program VERTICES EDGES MAXWEIGHT [LOGLEVEL]");
     exit(1);
 }
-
 
 void runAlgorithm(Algorithm a)
 {
@@ -40,11 +41,11 @@ void runAlgorithm(Algorithm a)
 
     if(a == AUCTION)
     {
-        log(INFO, -1, "Auction execution time: %f s", time_spent);
+        log(TEST, -1, "Auction execution time: %f s", time_spent);
     }
     else
     {
-        log(INFO, -1, "Dijkstra execution time: %f s", time_spent);
+        log(TEST, -1, "Dijkstra execution time: %f s", time_spent);
     }
     
     dist=mind[last];
@@ -52,10 +53,11 @@ void runAlgorithm(Algorithm a)
     if (dist != INT_MAX)
     {
         log(INFO, -1, "Minimum distance from node 0 to node %d equals %d", last, dist);
+        connected=1;
     }
     else
     {
-        log(INFO, -1, "Can't reach node %d from node 0!", last);
+        log(TEST, -1, "Can't reach node %d from node 0!", last);
     }
 
     free ( mind );
@@ -76,7 +78,7 @@ int main (int argc, char **argv )
     if(argc == 5)
     {
         int il = str2int(argv[4]);
-        if(il >= 0 && il <= 3)
+        if((il >= 0 && il <= 3) || (il == -100))
         {
             level = il;
         }
@@ -97,7 +99,8 @@ int main (int argc, char **argv )
         print_graph();
 
         runAlgorithm(DIJKSTRA);
-        runAlgorithm(AUCTION);
+        if(connected > 0)
+            runAlgorithm(AUCTION);
 
     }
     else
