@@ -1,6 +1,8 @@
 #include "generator.h"
 #include "utils.h"
 
+#include <string.h>
+
 #include <limits.h>
 
 int      edge_count=20;
@@ -21,7 +23,16 @@ void random_graph()
 
     for(i=0; i<vertex_count; i++)
         for(j=0; j<vertex_count; j++)
-            adj_matrix[i * vertex_count + j] = INT_MAX;
+        {
+            if(i == j)
+            {
+                adj_matrix[i * vertex_count + j] = 0;
+            }    
+            else
+            {
+                adj_matrix[i * vertex_count + j] = INT_MAX;
+            }
+        }
 
     for ( count = 0; count < edge_count; ) {
         i = rand()%vertex_count;
@@ -52,7 +63,11 @@ void print_graph()
     log(INFO, -1,  "Edges:    %d", edge_count );
     log(INFO, -1,  "------------");
 
+    char format[1024];
+    char num[32];
+
     for ( i = 0; i < vertex_count; i++ )
+    {
         for ( j = 0; j < vertex_count; j++ )
         {
             if(i==j)
@@ -66,4 +81,27 @@ void print_graph()
                 log(INFO, -1, "%d --- %d : %d", i, j, adj_matrix[ index ] );
             }
         }
+    }
+    log(INFO, -1, "--------------------");
+
+    for ( i = 0; i < vertex_count; i++ )
+    {
+        strcpy(format, "");
+        for ( j = 0; j < vertex_count; j++ )
+        {
+            index = i  * vertex_count + j ;
+
+            if ( adj_matrix[ index ] != INT_MAX )
+            {
+                sprintf(num, "%d\t", adj_matrix[index]);
+                strcat(format, num );
+            }
+            else
+            {
+                strcat(format, "Inf\t" );
+            }
+
+        }
+        log(INFO, -1, "%s", format );
+    }
 }
