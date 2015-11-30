@@ -6,8 +6,8 @@ OBJS=$(SRCS:.c=.o)
 
 EXE=program
 
-CFLAGS  += -fopenmp
-LDFLAGS += -fopenmp
+CFLAGS  += -fopenmp -g
+LDFLAGS += -fopenmp -g
 
 all : $(EXE)
 	$(info make $@ for $(EXE)...)

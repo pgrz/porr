@@ -29,7 +29,7 @@ void runAlgorithm(Algorithm a)
     beg = clock();
     if(a == AUCTION)
     {
-        mind = auction_distance ( adj_matrix, last );
+        mind = auction_distance ( adj_matrix, 0 );
     }
     else
     {

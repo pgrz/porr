@@ -8,6 +8,8 @@ void add_node(AuctionPath *ap, int node_id) {
     AuctionPathNode *new_node = malloc(sizeof(AuctionPathNode));
     memset(new_node, 0, sizeof(AuctionPathNode));
 
+    new_node->id = node_id;
+
     if (current_last_node == 0) {
         /* dodawanie pierwszego węzła do ścieżki */
         ap->first = new_node;
@@ -59,6 +61,35 @@ void free_path(AuctionPath *ap) {
     free(ap);
 }
 
+int find_nearest_neighbour(int adj[vertex_count][vertex_count],
+                           int *price_v,
+                           int node_id) {
+    int min_value = INT_MAX;
+    int min_dest_node;
+    int i;
+    int current_value;
+
+    for (i = 0; i < vertex_count; i++) {
+        if (i == node_id) {
+            continue;
+        }
+
+        int adj_val = adj[node_id][i];
+        if (adj_val == INT_MAX) {
+            current_value = INT_MAX;
+        } else {
+            current_value = adj_val + price_v[i];
+        }
+
+        if (current_value <= min_value) {
+            min_value = current_value;
+            min_dest_node = i;
+        }
+    }
+
+    return min_dest_node;
+}
+
 /**
  * Wylicza minimalną ścieżkę od start_node do destination_node.
  * Wynik zapisywany jest w tablicy mind - mind[start_node].
@@ -70,7 +101,47 @@ void find_shortest_path(int adj[vertex_count][vertex_count],
                         int *mind,
                         int start_node, 
                         int destination_node) {
-/* FIXME - zaimplementować algorytm */
+    AuctionPath *auctionPath;
+    int result = INT_MAX;
+    int current_node = start_node;
+    int result_length = 0;
+    
+    auctionPath = create_new_path(start_node);
+    while (1) {
+        int current_node = auctionPath->last->id;
+        int nearest_neighbour = find_nearest_neighbour(adj, price_v, current_node);
+        int dest_value = adj[current_node][nearest_neighbour] + price_v[nearest_neighbour];
+
+        log(DEBUG, -1, "Current node: %d", current_node);
+        log(DEBUG, -1, "Nearest neighbour: %d", nearest_neighbour);
+        log(DEBUG, -1, "Destination value: %d", dest_value);
+
+        if (price_v[current_node] < dest_value) {
+            log(DEBUG, -1, "Contracting!");
+            price_v[current_node] = dest_value;
+            if (current_node != auctionPath->first->id) {
+                remove_last_node(auctionPath);
+            }
+        } else {
+            log(DEBUG, -1, "Extending to node: %d", nearest_neighbour);
+            add_node(auctionPath, nearest_neighbour);   
+            if (nearest_neighbour == destination_node) {
+                break;
+            }
+        }
+    }
+
+    AuctionPathNode *capn = auctionPath->first;
+    while (1) {
+        AuctionPathNode *apn = capn->next;
+        if (apn == 0) {
+            break;
+        }
+
+        result_length += adj[capn->id][apn->id];
+        capn = apn;
+    }
+    mind[start_node] = result_length;
 }
 
 int *auction_distance (int adj[vertex_count][vertex_count], int destination_node)
@@ -82,6 +153,8 @@ int *auction_distance (int adj[vertex_count][vertex_count], int destination_node
     /* minimalne odległości od wybranego węzła do całej reszty */
     int *mind;
 
+    log(INFO, -1, "Beginning of auction distance");
+
     /* inicjalizacja wspólnego wektora kosztów */
     price_v = (int *) malloc ( vertex_count * sizeof(int));
     memset(price_v, 0, vertex_count * sizeof(int));
@@ -90,13 +163,18 @@ int *auction_distance (int adj[vertex_count][vertex_count], int destination_node
     mind[destination_node]=INT_MAX; //obejście na potrzeby maina -- jeśli int_max to nie można dotrzeć
 
     /* początek algorytmu */
-    for (i = 0; i < vertex_count; i++) {
+    // FIXME - ustawić na 0 podczas implementacji równoległej
+    for (i = vertex_count - 1; i < vertex_count; i++) {
         if (i == destination_node) {
             /* nie wyliczamy odległości od destination_node, do siebie samej */
             continue;
         }
+        // FIXME usunąć podczas implementacji równoległej
+        memset(price_v, 0, vertex_count * sizeof(int));
 
+        log(INFO, -1, "Looking for paths for node: %d", i);
         find_shortest_path(adj, price_v, mind, i, destination_node);
+        log(INFO, -1, "Finished looking for path for node: %d", i);
     }
 
     /* zwalnianie pamięci wektora kosztów */
