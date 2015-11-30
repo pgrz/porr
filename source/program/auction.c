@@ -1,183 +1,104 @@
 #include "auction.h"
 
-int *auction_distance ( int ohd[vertex_count][vertex_count]  )
+void add_node(AuctionPath *ap, int node_id) {
+    AuctionPathNode *current_last_node = ap->last;
+    AuctionPathNode *new_node = malloc(sizeof(AuctionPathNode));
+    memset(new_node, 0, sizeof(AuctionPathNode));
+
+    if (current_last_node == 0) {
+        /* dodawanie pierwszego węzła do ścieżki */
+        ap->first = new_node;
+    } else {
+        current_last_node->next = new_node;
+    }
+    new_node->prev = current_last_node;
+    ap->last = new_node;
+    ap->count++;
+}
+
+void remove_last_node(AuctionPath *ap) {
+    AuctionPathNode *current_last_node = ap->last;
+
+    if (current_last_node == 0) {
+        /* nic nie trzeba robić - ścieżka już jest pusta */
+        return;
+    }
+
+    AuctionPathNode *previous_node = current_last_node->prev;
+
+    if (previous_node == 0) {
+        /* usuwamy ostatni węzeł */
+        ap->first = 0;
+        ap->last = 0;
+    } else {
+        previous_node->next = 0;
+        ap->last = previous_node;
+    }
+    ap->count--;
+
+    free(current_last_node);
+}
+
+AuctionPath *create_new_path(int first_node_id) {
+    AuctionPath *new_path = malloc(sizeof(AuctionPath));
+    memset(new_path, 0, sizeof(AuctionPath));
+
+    add_node(new_path, first_node_id);
+
+    return new_path;
+}
+
+void free_path(AuctionPath *ap) {
+    while (ap->count > 0) {
+        remove_last_node(ap);
+    }
+
+    free(ap);
+}
+
+/**
+ * Wylicza minimalną ścieżkę od start_node do destination_node.
+ * Wynik zapisywany jest w tablicy mind - mind[start_node].
+ *
+ * Wektor kosztów jest aktualizowany w trakcie trwania funkcji.
+ */
+void find_shortest_path(int adj[vertex_count][vertex_count],
+                        int *price_v,
+                        int *mind,
+                        int start_node, 
+                        int destination_node) {
+/* FIXME - zaimplementować algorytm */
+}
+
+int *auction_distance (int adj[vertex_count][vertex_count], int destination_node)
 {
-    int *connected;
+    /* wektor kosztów */
+    int *price_v;
     int i;
     int i4_huge = 2147483647;
-    int md;
+    /* minimalne odległości od wybranego węzła do całej reszty */
     int *mind;
-    int mv;
-    int my_first;
-    int my_id;
-    int my_last;
-    int my_md;
-    int my_mv;
-    int my_step;
-    int nth;
-    /*
-       Start out with only node 0 connected to the tree.
-     */
-    connected = ( int * ) malloc ( vertex_count * sizeof ( int ) );
 
-    connected[0] = 1;
-    for ( i = 1; i < vertex_count; i++ )
-    {
-        connected[i] = 0;
-    }
-    /*
-       Initial estimate of minimum distance is the 1-step distance.
-     */
-    mind = ( int * ) malloc ( vertex_count * sizeof ( int ) );
+    /* inicjalizacja wspólnego wektora kosztów */
+    price_v = (int *) malloc ( vertex_count * sizeof(int));
+    memset(price_v, 0, vertex_count * sizeof(int));
 
-    for ( i = 0; i < vertex_count; i++ )
-    {
-        mind[i] = ohd[0][i];
-    }
-    /*
-       Begin the parallel region.
-     */
-    # pragma omp parallel private ( my_first, my_id, my_last, my_md, my_mv, my_step ) \
-    shared ( connected, md, mind, mv, nth, ohd )
-    {
-        my_id = omp_get_thread_num ( );
-        nth = omp_get_num_threads ( );
-        my_first =   (   my_id       * vertex_count ) / nth;
-        my_last  =   ( ( my_id + 1 ) * vertex_count ) / nth - 1;
-        /*
-           The SINGLE directive means that the block is to be executed by only
-           one thread, and that thread will be whichever one gets here first.
-         */
-        # pragma omp single
-        {
-            printf ( "\n" );
-            printf ( "  P%d: Parallel region begins with %d threads\n", my_id, nth );
-            printf ( "\n" );
+    mind = (int *) malloc ( vertex_count * sizeof(int)); 
+
+    /* początek algorytmu */
+    for (i = 0; i < vertex_count; i++) {
+        if (i == destination_node) {
+            /* nie wyliczamy odległości od destination_node, do siebie samej */
+            continue;
         }
-        fprintf ( stdout, "  P%d:  First=%d  Last=%d\n", my_id, my_first, my_last );
 
-        for ( my_step = 1; my_step < vertex_count; my_step++ )
-        {
-            /*
-               Before we compare the results of each thread, set the shared variable
-               MD to a big value.  Only one thread needs to do this.
-             */
-            # pragma omp single
-            {
-                md = i4_huge;
-                mv = -1;
-            }
-            /*
-               Each thread finds the nearest unconnected node in its part of the graph.
-               Some threads might have no unconnected nodes left.
-             */
-            find_nearest_a ( my_first, my_last, mind, connected, &my_md, &my_mv );
-            /*
-               In order to determine the minimum of all the MY_MD's, we must insist
-               that only one thread at a time execute this block!
-             */
-            # pragma omp critical
-            {
-                if ( my_md < md )
-                {
-                    md = my_md;
-                    mv = my_mv;
-                }
-            }
-            /*
-               This barrier means that ALL threads have executed the critical
-               block, and therefore MD and MV have the correct value.  Only then
-               can we proceed.
-             */
-            # pragma omp barrier
-            /*
-               If MV is -1, then NO thread found an unconnected node, so we're done early.
-               OpenMP does not like to BREAK out of a parallel region, so we'll just have
-               to let the iteration run to the end, while we avoid doing any more updates.
-
-               Otherwise, we connect the nearest node.
-             */
-            # pragma omp single
-            {
-                if ( mv != - 1 )
-                {
-                    connected[mv] = 1;
-                    printf ( "  P%d: Connecting node %d.\n", my_id, mv );
-                }
-            }
-            /*
-               Again, we don't want any thread to proceed until the value of
-               CONNECTED is updated.
-             */
-            # pragma omp barrier
-            /*
-               Now each thread should update its portion of the MIND vector,
-               by checking to see whether the trip from 0 to MV plus the step
-               from MV to a node is closer than the current record.
-             */
-            if ( mv != -1 )
-            {
-                update_mind_a ( my_first, my_last, mv, connected, ohd, mind );
-            }
-            /*
-               Before starting the next step of the iteration, we need all threads
-               to complete the updating, so we set a BARRIER here.
-             */
-            #pragma omp barrier
-        }
-        /*
-           Once all the nodes have been connected, we can exit.
-         */
-        # pragma omp single
-        {
-            printf ( "\n" );
-            printf ( "  P%d: Exiting parallel region.\n", my_id );
-        }
+        find_shortest_path(adj, price_v, mind, i, destination_node);
     }
 
-    free ( connected );
+    /* zwalnianie pamięci wektora kosztów */
+    free(price_v);
 
     return mind;
 }
 
-void find_nearest_a ( int s, int e, int mind[vertex_count], int connected[vertex_count], int *d,
-                    int *v )
-{
-    int i;
-    int i4_huge = 2147483647;
 
-    *d = i4_huge;
-    *v = -1;
-
-    for ( i = s; i <= e; i++ )
-    {
-        if ( !connected[i] && ( mind[i] < *d ) )
-        {
-            *d = mind[i];
-            *v = i;
-        }
-    }
-    return;
-}
-
-void update_mind_a ( int s, int e, int mv, int connected[vertex_count], int ohd[vertex_count][vertex_count],
-                   int mind[vertex_count] )
-{
-    int i;
-    int i4_huge = 2147483647;
-
-    for ( i = s; i <= e; i++ )
-    {
-        if ( !connected[i] )
-        {
-            if ( ohd[mv][i] < i4_huge )
-            {
-                if ( mind[mv] + ohd[mv][i] < mind[i] )
-                {
-                    mind[i] = mind[mv] + ohd[mv][i];
-                }
-            }
-        }
-    }
-    return;
-}

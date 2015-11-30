@@ -81,7 +81,15 @@ int main (int argc, char **argv )
     {
         print_graph();
 
-        mind = dijkstra_distance ( adj_matrix );
+        /* FIXME - wywołanie się nie kompiluje: 
+         *
+         * passing argument 1 of ‘dijkstra_distance’ from incompatible pointer type
+         *
+         * w pliku generator.h deklaracja zmiennej jest jednowymiarowa: int *,
+         * a funkcja przyjmuje tablicę [vertex_count][vertex_count], czyli dwa wymiary
+         *
+         **/
+        /*mind = dijkstra_distance ( adj_matrix );*/
         /*
            Print the results.
          */
