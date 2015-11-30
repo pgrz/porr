@@ -63,8 +63,8 @@ void print_graph()
     log(INFO, -1,  "Edges:    %d", edge_count );
     log(INFO, -1,  "------------");
 
-    char format[1024];
-    char num[32];
+    //char format[1024];
+    //char num[32];
 
     for ( i = 0; i < vertex_count; i++ )
     {
@@ -82,8 +82,8 @@ void print_graph()
             }
         }
     }
+/*
     log(INFO, -1, "--------------------");
-
     for ( i = 0; i < vertex_count; i++ )
     {
         strcpy(format, "");
@@ -104,4 +104,5 @@ void print_graph()
         }
         log(INFO, -1, "%s", format );
     }
+    */
 }

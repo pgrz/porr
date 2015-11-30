@@ -57,6 +57,7 @@ void runAlgorithm(Algorithm a)
     if (dist != INT_MAX)
     {
         log(INFO, -1, "Minimum distance from node 0 to node %d equals %d", last, dist);
+        log(TEST, -1, "Dist: %d", dist);
         valid=1;
     }
     else
@@ -96,7 +97,6 @@ int main (int argc, char **argv )
     edge_count = (edge_count > max_edges) ?  max_edges : edge_count;
 
     random_graph();
-
 
     if(adj_matrix != 0)
     {
