@@ -6,7 +6,9 @@
 #include "dijkstra.h"
 #include "auction.h"
 
-int connected=0;
+int valid=0;
+double dijk_time=0.0;
+double auct_time=0.0;
 
 typedef enum {
 AUCTION, DIJKSTRA
@@ -41,11 +43,13 @@ void runAlgorithm(Algorithm a)
 
     if(a == AUCTION)
     {
-        log(TEST, -1, "Auction execution time: %f s", time_spent);
+        log(INFO, -1, "Auction execution time: %f s", time_spent);
+        auct_time=time_spent;
     }
     else
     {
-        log(TEST, -1, "Dijkstra execution time: %f s", time_spent);
+        log(INFO, -1, "Dijkstra execution time: %f s", time_spent);
+        dijk_time=time_spent;
     }
     
     dist=mind[last];
@@ -53,11 +57,11 @@ void runAlgorithm(Algorithm a)
     if (dist != INT_MAX)
     {
         log(INFO, -1, "Minimum distance from node 0 to node %d equals %d", last, dist);
-        connected=1;
+        valid=1;
     }
     else
     {
-        log(TEST, -1, "Can't reach node %d from node 0!", last);
+        log(INFO, -1, "Can't reach node %d from node 0!", last);
     }
 
     free ( mind );
@@ -78,7 +82,7 @@ int main (int argc, char **argv )
     if(argc == 5)
     {
         int il = str2int(argv[4]);
-        if((il >= 0 && il <= 3) || (il == -100))
+        if((il >= ERROR && il <= DEBUG) || (il == TEST))
         {
             level = il;
         }
@@ -99,8 +103,11 @@ int main (int argc, char **argv )
         print_graph();
 
         runAlgorithm(DIJKSTRA);
-        if(connected > 0)
+        if(valid > 0)
+        {
             runAlgorithm(AUCTION);
+            log(TEST, -1, "%d\t%d\t%d\t%f\t%f", vertex_count, edge_count, max_weight, dijk_time, auct_time);
+        }
 
     }
     else

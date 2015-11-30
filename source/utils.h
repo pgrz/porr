@@ -4,11 +4,11 @@
 #include <stdarg.h>
 
 typedef enum logLevel {
+TEST    = 10,
 DEBUG   = 3,
 INFO    = 2,
 WARNING = 1,
-ERROR   = 0,
-TEST    = -100
+ERROR   = 0
 } LogLevel;
 
 
