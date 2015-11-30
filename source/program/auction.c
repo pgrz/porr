@@ -87,6 +87,7 @@ int *auction_distance (int adj[vertex_count][vertex_count], int destination_node
     memset(price_v, 0, vertex_count * sizeof(int));
 
     mind = (int *) malloc ( vertex_count * sizeof(int)); 
+    mind[destination_node]=INT_MAX; //obejście na potrzeby maina -- jeśli int_max to nie można dotrzeć
 
     /* początek algorytmu */
     for (i = 0; i < vertex_count; i++) {

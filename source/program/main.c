@@ -1,11 +1,14 @@
-#include <stdio.h>
-#include <string.h>
 #include <time.h>
 #include <limits.h>
 
 #include "utils.h"
 #include "generator.h"
 #include "dijkstra.h"
+#include "auction.h"
+
+typedef enum {
+AUCTION, DIJKSTRA
+} Algorithm;
 
 void usage(void)
 {
@@ -13,12 +16,54 @@ void usage(void)
     exit(1);
 }
 
-int main (int argc, char **argv )
+
+void runAlgorithm(Algorithm a)
 {
     int *mind;
     clock_t beg, end;
     double time_spent;
     int last, dist;
+
+    last=vertex_count - 1;
+
+    beg = clock();
+    if(a == AUCTION)
+    {
+        mind = auction_distance ( adj_matrix, last );
+    }
+    else
+    {
+        mind = dijkstra_distance ( adj_matrix );
+    }
+    end = clock();
+    time_spent = (double)(end - beg) / CLOCKS_PER_SEC;
+
+    if(a == AUCTION)
+    {
+        log(-1, "Auction execution time: %f s", time_spent);
+    }
+    else
+    {
+        log(-1, "Dijkstra execution time: %f s", time_spent);
+    }
+    
+    dist=mind[last];
+
+    if (dist != INT_MAX)
+    {
+        log(-1, "Minimum distance from node 0 to node %d equals %d", last, dist);
+    }
+    else
+    {
+        log(-1, "Can't reach node %d from node 0!", last);
+    }
+
+    free ( mind );
+}
+
+
+int main (int argc, char **argv )
+{
 
     if (argc != 4)
     {
@@ -43,26 +88,9 @@ int main (int argc, char **argv )
     {
         print_graph();
 
-        beg = clock();
-        mind = dijkstra_distance ( adj_matrix );
-        end = clock();
-        time_spent = (double)(end - beg) / CLOCKS_PER_SEC;
+        runAlgorithm(DIJKSTRA);
+        runAlgorithm(AUCTION);
 
-        log(-1, "Execution time: %f s", time_spent);
-        
-        last=vertex_count - 1;
-        dist=mind[last];
-
-        if (dist != INT_MAX)
-        {
-            log(-1, "Minimum distance from node 0 to node %d equals %d", last, dist);
-        }
-        else
-        {
-            log(-1, "Can't reach node %d from node 0!", last);
-        }
-
-        free ( mind );
     }
     else
     {
