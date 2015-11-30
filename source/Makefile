@@ -1,15 +1,27 @@
-SUBDIRS := $(wildcard */.)
+CC=gcc
 
-.PHONY: $(SUBDIRS)
-.SILENT:
+SRCS=$(wildcard *.c)
+DEPS =$(wildcard *.h)
+OBJS=$(SRCS:.c=.o)
 
-all:        TARGET=all
-clean:      TARGET=clean
-clobber:    TARGET=clobber
-install:    TARGET=install
-uninstall:  TARGET=uninstall
+EXE=program
 
-all clean clobber install uninstall : $(SUBDIRS)
+CFLAGS  += -fopenmp
+LDFLAGS += -fopenmp
 
-$(SUBDIRS):
-	@exec $(MAKE) -C $@ $(TARGET)
+all : $(EXE)
+	$(info make $@ for $(EXE)...)
+
+$(EXE) : $(OBJS)
+	@$(CC) $^ $(LDFLAGS) -o $@
+
+%.o : %.c $(DEPS)
+	@$(CC) $(CFLAGS) -c $<
+
+clean:
+	$(info make $@ for $(EXE)...)
+	@rm -f $(OBJS)
+
+clobber:
+	$(info make $@ for $(EXE)...)
+	@rm -f $(OBJS) $(EXE)
