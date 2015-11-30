@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-#include <stdlib.h>
 
 #include "utils.h"
 #include "generator.h"
@@ -11,26 +10,6 @@ void usage(void)
 {
     log(-1, "Usage: program [VN] [EN] [MW]");
     exit(1);
-}
-
-void timestamp ( void )
-{
-# define TIME_SIZE 40
-
-    static char time_buffer[TIME_SIZE];
-    const struct tm *tm;
-    size_t len;
-    time_t now;
-
-    now = time ( NULL );
-    tm = localtime ( &now );
-
-    len = strftime ( time_buffer, TIME_SIZE, "%d %B %Y %I:%M:%S %p", tm );
-
-    printf ( "%s\n", time_buffer );
-
-    return;
-# undef TIME_SIZE
 }
 
 int main (int argc, char **argv )
@@ -53,24 +32,24 @@ int main (int argc, char **argv )
     max_edges = (vertex_count * ( vertex_count - 1 )) / 2;
     edge_count = (edge_count > max_edges) ?  max_edges : edge_count;
 
-    //Generate
     random_graph();
 
-    //Print it
+    clock_t beg, end;
+    double time_spent;
+
     if(adj_matrix != 0)
     {
         print_graph();
 
+        beg = clock();
         mind = dijkstra_distance ( adj_matrix );
-        /*
-           Print the results.
-         */
-        int i;
-        log(-1, "Minimum distances from node 0:");
-        for ( i = 0; i < vertex_count; i++ )
-        {
-            log(-1, "%2d  %2d", i, mind[i]);
-        }
+        end = clock();
+        time_spent = (double)(end - beg) / CLOCKS_PER_SEC;
+
+        log(-1, "Execution time: %f s", time_spent);
+
+        log(-1, "Minimum distance from node 0 to node %d equals %d", vertex_count - 1, mind[vertex_count - 1]);
+
         free ( mind );
     }
     else
