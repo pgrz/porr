@@ -11,7 +11,7 @@ int     *adj_matrix;
 
 void random_graph()
 {
-    int i, j, count, index, temp;
+    int i, j, count, weight;
 
     if ( ( adj_matrix = ( int * ) calloc( vertex_count * vertex_count, sizeof( int ) ) ) == NULL )
     {
@@ -33,17 +33,10 @@ void random_graph()
             continue;
         }
 
-        if ( i > j )
-        {
-            temp = i;
-            i = j;
-            j = temp;
-        }
-
-        index = i * vertex_count + j;
-
-        if ( adj_matrix[ index ] == INT_MAX ) {
-            adj_matrix[ index ] = 1 + rand()%max_weight;
+        if ( adj_matrix[ i * vertex_count + j ] == INT_MAX ) {
+            weight= 1 + rand()%max_weight;
+            adj_matrix[ i * vertex_count + j ] = weight;
+            adj_matrix[ j * vertex_count + i ] = weight;
             count++;
         }
     }
