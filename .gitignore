@@ -2,4 +2,6 @@
 *.swo
 *.swp
 *.o
-build/*
+*.aux
+*.log
+*.pdf

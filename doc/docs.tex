@@ -1,0 +1,73 @@
+\documentclass {article}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage {polski}
+\usepackage {float}
+\usepackage {graphicx}
+\usepackage{indentfirst}
+\usepackage[utf8]{inputenc}
+
+\author {Michał Cybulski, Piotr Grzegorski}
+\title {PORR -- Projekt\\Etap 1.}
+\date {30 listopada 2015r.}
+\begin {document}
+
+\maketitle
+
+\section {Zadanie}
+
+Wyznaczanie najkrótszej ścieżki w grafie metodą aukcyjną, porównanie z algorytmem Dijkstry.
+
+Zdecydowano o realizacji zadania przy pomocy technologii OpenMP.
+
+\section{Implementacja}
+
+Program został napisany w języku C.
+
+\subsection{Argumenty wywołania}
+
+V E MW poziom logowania
+
+\subsection{Przebieg działania programu}
+
+Generuj --> wywołaj Dijkstrę --> jeśli graf niespojny odrzucamy wynik, jesli spojny wywołaj aukcyjny --> end
+
+\subsection{Zrównoleglenie algorytmu Dijkstry}
+
+Każdy wątek sprawdza odległość dla podległych sobie wierzchołków.
+
+\subsection{Zrównoleglenie algorytmu aukcyjnego}
+
+Inaczej.
+
+\section{Testy}
+
+\subsection{Jakość zrównoleglenia}
+
+Testy wywołań sekwencyjnych wykonano przez ustawienie zmiennej środowiskowej sterującej OpenMP:
+
+\begin{verbatim}
+export OMP_NUM_THREADS=1
+\end{verbatim}
+
+Zgodnie z przewidywaniami w obu wypadkach wydajność wzrosła po zrównolegleniu obliczeń. Efekty były bardziej wyraźne dla algorytmu ........................
+
+\paragraph{Dijkstra}
+
+%tabelka wyników
+
+\paragraph{Aukcyjny}
+
+%tabelka wyników
+
+
+\subsection{Porównanie algorytmów}
+
+Algorytmy były wykonywane dla tych samych grafów, grafy generowane w rozmiarach A, B i C po 100 razy.
+
+%tabelka wyników
+
+\section{Wnioski}
+
+
+
+\end {document}
