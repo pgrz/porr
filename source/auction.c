@@ -164,17 +164,15 @@ int *auction_distance (int adj[vertex_count][vertex_count], int destination_node
 
     /* początek algorytmu */
     // FIXME - ustawić na 0 podczas implementacji równoległej
-    for (i = vertex_count - 1; i < vertex_count; i++) {
+    for (i = 0; i < vertex_count; i++) {
         if (i == destination_node) {
             /* nie wyliczamy odległości od destination_node, do siebie samej */
             continue;
         }
-        // FIXME usunąć podczas implementacji równoległej
-        memset(price_v, 0, vertex_count * sizeof(int));
 
-        log(INFO, -1, "Looking for paths for node: %d", i);
+        log(DEBUG, -1, "Looking for paths for node: %d", i);
         find_shortest_path(adj, price_v, mind, i, destination_node);
-        log(INFO, -1, "Finished looking for path for node: %d", i);
+        log(DEBUG, -1, "Finished looking for path for node: %d", i);
     }
 
     /* zwalnianie pamięci wektora kosztów */
