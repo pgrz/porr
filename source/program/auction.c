@@ -1,4 +1,5 @@
 #include "auction.h"
+#include "utils.h"
 
 void add_node(AuctionPath *ap, int node_id) {
     AuctionPathNode *current_last_node = ap->last;

@@ -2,15 +2,14 @@
 #include <string.h>
 #include <time.h>
 #include <stdlib.h>
-#include <errno.h>   // for errno
-#include <limits.h>  // for INT_MAX
 
+#include "utils.h"
 #include "generator.h"
 #include "dijkstra.h"
 
 void usage(void)
 {
-    printf("Usage: program [VN] [EN] [MW]");
+    log(-1, "Usage: program [VN] [EN] [MW]");
     exit(1);
 }
 
@@ -33,25 +32,6 @@ void timestamp ( void )
     return;
 # undef TIME_SIZE
 }
-
-int str2int(const char* cc)
-{
-    char *p;
-
-    errno = 0;
-
-    long conv = strtol(cc, &p, 10);
-
-    if (errno != 0 || *p != '\0' || conv > INT_MAX)
-    {
-        usage();
-    }
-    else
-    {
-        return conv;    
-    }
-}
-
 
 int main (int argc, char **argv )
 {
@@ -81,31 +61,21 @@ int main (int argc, char **argv )
     {
         print_graph();
 
-        /* FIXME - wywołanie się nie kompiluje: 
-         *
-         * passing argument 1 of ‘dijkstra_distance’ from incompatible pointer type
-         *
-         * w pliku generator.h deklaracja zmiennej jest jednowymiarowa: int *,
-         * a funkcja przyjmuje tablicę [vertex_count][vertex_count], czyli dwa wymiary
-         *
-         **/
-        /*mind = dijkstra_distance ( adj_matrix );*/
+        mind = dijkstra_distance ( adj_matrix );
         /*
            Print the results.
          */
         int i;
-        fprintf ( stdout, "\n" );
-        fprintf ( stdout, "  Minimum distances from node 0:\n");
-        fprintf ( stdout, "\n" );
+        log(-1, "Minimum distances from node 0:");
         for ( i = 0; i < vertex_count; i++ )
         {
-            fprintf ( stdout, "  %2d  %2d\n", i, mind[i] );
+            log(-1, "%2d  %2d", i, mind[i]);
         }
         free ( mind );
     }
     else
     {
-        printf("Graph not generated!\n");
+        log(-1, "Graph not generated!");
     }
 
     return 0;

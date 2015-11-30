@@ -1,4 +1,5 @@
 #include "dijkstra.h"
+#include "utils.h"
 
 int *dijkstra_distance ( int ohd[vertex_count][vertex_count]  )
 {
@@ -50,11 +51,10 @@ int *dijkstra_distance ( int ohd[vertex_count][vertex_count]  )
          */
         # pragma omp single
         {
-            printf ( "\n" );
-            printf ( "  P%d: Parallel region begins with %d threads\n", my_id, nth );
-            printf ( "\n" );
+            log(my_id, "P%d: Parallel region begins with %d threads", my_id, nth );
         }
-        fprintf ( stdout, "  P%d:  First=%d  Last=%d\n", my_id, my_first, my_last );
+
+        log(my_id, "P%d:  First=%d  Last=%d", my_id, my_first, my_last );
 
         for ( my_step = 1; my_step < vertex_count; my_step++ )
         {
@@ -71,7 +71,7 @@ int *dijkstra_distance ( int ohd[vertex_count][vertex_count]  )
                Each thread finds the nearest unconnected node in its part of the graph.
                Some threads might have no unconnected nodes left.
              */
-            find_nearest ( my_first, my_last, mind, connected, &my_md, &my_mv );
+            find_nearest ( my_first, my_last, mind, connected, &my_md, &my_mv, my_id );
             /*
                In order to determine the minimum of all the MY_MD's, we must insist
                that only one thread at a time execute this block!
@@ -102,7 +102,8 @@ int *dijkstra_distance ( int ohd[vertex_count][vertex_count]  )
                 if ( mv != - 1 )
                 {
                     connected[mv] = 1;
-                    printf ( "  P%d: Connecting node %d.\n", my_id, mv );
+                    log(my_id, "P%d: Connecting node %d", my_id, mv );
+                    log(-1, "----------------------------");
                 }
             }
             /*
@@ -117,7 +118,7 @@ int *dijkstra_distance ( int ohd[vertex_count][vertex_count]  )
              */
             if ( mv != -1 )
             {
-                update_mind ( my_first, my_last, mv, connected, ohd, mind );
+                update_mind ( my_first, my_last, mv, connected, ohd, mind, my_id );
             }
             /*
                Before starting the next step of the iteration, we need all threads
@@ -130,8 +131,7 @@ int *dijkstra_distance ( int ohd[vertex_count][vertex_count]  )
          */
         # pragma omp single
         {
-            printf ( "\n" );
-            printf ( "  P%d: Exiting parallel region.\n", my_id );
+            log(my_id, "P%d: Exiting parallel region.", my_id );
         }
     }
 
@@ -141,13 +141,14 @@ int *dijkstra_distance ( int ohd[vertex_count][vertex_count]  )
 }
 
 void find_nearest ( int s, int e, int mind[vertex_count], int connected[vertex_count], int *d,
-                    int *v )
+                    int *v, int my_id )
 {
     int i;
     int i4_huge = 2147483647;
 
     *d = i4_huge;
     *v = -1;
+    log(my_id, "P%d: initial distance: %d, initial closest: %d", my_id, *d, *v);
 
     for ( i = s; i <= e; i++ )
     {
@@ -156,15 +157,18 @@ void find_nearest ( int s, int e, int mind[vertex_count], int connected[vertex_c
             *d = mind[i];
             *v = i;
         }
+        log(my_id, "P%d: after checked %d: current distance = %d, closest node=%d", my_id, i, *d, *v);
     }
     return;
 }
 
 void update_mind ( int s, int e, int mv, int connected[vertex_count], int ohd[vertex_count][vertex_count],
-                   int mind[vertex_count] )
+                   int mind[vertex_count], int my_id )
 {
     int i;
     int i4_huge = 2147483647;
+
+    log(my_id, "P%d: updating mind", my_id);
 
     for ( i = s; i <= e; i++ )
     {
