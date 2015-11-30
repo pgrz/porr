@@ -12,7 +12,7 @@ AUCTION, DIJKSTRA
 
 void usage(void)
 {
-    log(-1, "Usage: program [VN] [EN] [MW]");
+    log(INFO, -1, "Usage: program VERTICES EDGES MAXWEIGHT [LOGLEVEL]");
     exit(1);
 }
 
@@ -40,22 +40,22 @@ void runAlgorithm(Algorithm a)
 
     if(a == AUCTION)
     {
-        log(-1, "Auction execution time: %f s", time_spent);
+        log(INFO, -1, "Auction execution time: %f s", time_spent);
     }
     else
     {
-        log(-1, "Dijkstra execution time: %f s", time_spent);
+        log(INFO, -1, "Dijkstra execution time: %f s", time_spent);
     }
     
     dist=mind[last];
 
     if (dist != INT_MAX)
     {
-        log(-1, "Minimum distance from node 0 to node %d equals %d", last, dist);
+        log(INFO, -1, "Minimum distance from node 0 to node %d equals %d", last, dist);
     }
     else
     {
-        log(-1, "Can't reach node %d from node 0!", last);
+        log(INFO, -1, "Can't reach node %d from node 0!", last);
     }
 
     free ( mind );
@@ -64,8 +64,7 @@ void runAlgorithm(Algorithm a)
 
 int main (int argc, char **argv )
 {
-
-    if (argc != 4)
+    if (argc < 4 || argc > 5)
     {
         usage();
     }
@@ -73,6 +72,15 @@ int main (int argc, char **argv )
     vertex_count=str2int(argv[1]);
     edge_count=str2int(argv[2]);
     max_weight=str2int(argv[3]);
+    
+    if(argc == 5)
+    {
+        int il = str2int(argv[4]);
+        if(il >= 0 && il <= 3)
+        {
+            level = il;
+        }
+    }
 
     //Seed init
     srand( ( unsigned short ) time( NULL ) );
@@ -94,7 +102,7 @@ int main (int argc, char **argv )
     }
     else
     {
-        log(-1, "Graph not generated!");
+        log(WARNING, -1, "Graph not generated!");
     }
 
     return 0;

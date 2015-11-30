@@ -13,14 +13,14 @@ void random_graph()
 {
     int i, j, count, index, temp;
 
-    if ( ( adj_matrix = ( int * ) calloc( vertex_count * vertex_count, sizeof( int ) ) )
-            == NULL ) {
-        printf( "Not enough room for this size graph\n" );
+    if ( ( adj_matrix = ( int * ) calloc( vertex_count * vertex_count, sizeof( int ) ) ) == NULL )
+    {
+        log(ERROR, -1, "Not enough room for this size graph");
         return;
     }
 
-    for(i=0; i<vertex_count;i++)
-        for(j=0;j<vertex_count;j++)
+    for(i=0; i<vertex_count; i++)
+        for(j=0; j<vertex_count; j++)
             adj_matrix[i * vertex_count + j] = INT_MAX;
 
     for ( count = 0; count < edge_count; ) {
@@ -32,7 +32,7 @@ void random_graph()
             adj_matrix[i * vertex_count + j] = 0;
             continue;
         }
-            
+
         if ( i > j )
         {
             temp = i;
@@ -55,16 +55,22 @@ void print_graph()
 {
     int i, j, index;
 
-    log(-1,  "Vertices: %d", vertex_count);
-    log(-1,  "Edges:    %d", edge_count );
-    log(-1,  "------------");
+    log(INFO, -1,  "Vertices: %d", vertex_count);
+    log(INFO, -1,  "Edges:    %d", edge_count );
+    log(INFO, -1,  "------------");
 
     for ( i = 0; i < vertex_count; i++ )
         for ( j = 0; j < vertex_count; j++ )
         {
-            if(i==j) continue;
+            if(i==j)
+            {
+                continue;
+            }
+
             index = i  * vertex_count + j ;
             if ( adj_matrix[ index ] != INT_MAX )
-            log(-1, "%d --- %d : %d", i, j, adj_matrix[ index ] );
+            {
+                log(INFO, -1, "%d --- %d : %d", i, j, adj_matrix[ index ] );
+            }
         }
 }

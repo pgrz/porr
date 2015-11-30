@@ -4,10 +4,19 @@
 #include <errno.h>   // for errno
 #include <limits.h>  // for INT_MAX
 
-void _proxy_log(int id, const char *fmt, ...) {
+
+LogLevel level=DEBUG;
+
+void _proxy_log(LogLevel msglev, int id, const char *fmt, ...)
+{
+    if(msglev > level)
+    {
+        return;
+    }
+
     va_list arg;
 
-    char colbuf[10];
+    char colbuf[10] = "\0";
     char buffer[1024];
 
     va_start(arg, fmt);
@@ -17,10 +26,6 @@ void _proxy_log(int id, const char *fmt, ...) {
     if (++id != 0)
     {
         sprintf(colbuf, "\x1B[3%dm", id);
-    }
-    else
-    {
-        sprintf(colbuf, "");
     }
 
     printf("%s%s\033[0m", colbuf, buffer);

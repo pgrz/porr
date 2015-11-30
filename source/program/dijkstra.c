@@ -52,10 +52,10 @@ int *dijkstra_distance ( int ohd[vertex_count][vertex_count]  )
          */
         # pragma omp single
         {
-            log(my_id, "P%d: Parallel region begins with %d threads", my_id, nth );
+            log(DEBUG, my_id, "P%d: Parallel region begins with %d threads", my_id, nth );
         }
 
-        log(my_id, "P%d:  First=%d  Last=%d", my_id, my_first, my_last );
+        log(DEBUG, my_id, "P%d:  First=%d  Last=%d", my_id, my_first, my_last );
 
         for ( my_step = 1; my_step < vertex_count; my_step++ )
         {
@@ -103,8 +103,8 @@ int *dijkstra_distance ( int ohd[vertex_count][vertex_count]  )
                 if ( mv != - 1 )
                 {
                     connected[mv] = 1;
-                    log(my_id, "P%d: Connecting node %d", my_id, mv );
-                    log(-1, "----------------------------");
+                    log(DEBUG, my_id, "P%d: Connecting node %d", my_id, mv );
+                    log(DEBUG, -1, "----------------------------");
                 }
             }
             /*
@@ -132,7 +132,7 @@ int *dijkstra_distance ( int ohd[vertex_count][vertex_count]  )
          */
         # pragma omp single
         {
-            log(my_id, "P%d: Exiting parallel region.", my_id );
+            log(DEBUG, my_id, "P%d: Exiting parallel region.", my_id );
         }
     }
 
@@ -148,7 +148,7 @@ void find_nearest ( int s, int e, int mind[vertex_count], int connected[vertex_c
 
     *d = INT_MAX;
     *v = -1;
-    log(my_id, "P%d: initial distance: %d, initial closest: %d", my_id, *d, *v);
+    log(DEBUG, my_id, "P%d: initial distance: %d, initial closest: %d", my_id, *d, *v);
 
     for ( i = s; i <= e; i++ )
     {
@@ -157,7 +157,7 @@ void find_nearest ( int s, int e, int mind[vertex_count], int connected[vertex_c
             *d = mind[i];
             *v = i;
         }
-        log(my_id, "P%d: after checked %d: current distance = %d, closest node=%d", my_id, i, *d, *v);
+        log(DEBUG, my_id, "P%d: after checked %d: current distance = %d, closest node=%d", my_id, i, *d, *v);
     }
     return;
 }
@@ -167,7 +167,7 @@ void update_mind ( int s, int e, int mv, int connected[vertex_count], int ohd[ve
 {
     int i;
 
-    log(my_id, "P%d: updating mind", my_id);
+    log(DEBUG, my_id, "P%d: updating mind", my_id);
 
     for ( i = s; i <= e; i++ )
     {
