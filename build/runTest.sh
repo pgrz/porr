@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 tstamp=$(date +%s)
 logfile=test_${tstamp}.log
@@ -11,10 +11,6 @@ fi
 
 for i in $(seq 1 $1)
 do
+    echo -ne "$i\t" >> $logfile
     ./program $2 $3 $4 10 >> $logfile
 done
-
-
-ls $logfile
-
-awk '{ sum1 += $6; sum2 += $7; cnt1++; cnt2++;} END { print sum1/cnt1; print sum2/cnt2;}' $logfile
