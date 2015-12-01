@@ -9,6 +9,8 @@
 int valid=0;
 double dijk_time=0.0;
 double auct_time=0.0;
+int dijk_dist=0;
+int auct_dist=0;
 
 typedef enum {
 AUCTION, DIJKSTRA
@@ -45,19 +47,20 @@ void runAlgorithm(Algorithm a)
     {
         log(INFO, -1, "Auction execution time: %f s", time_spent);
         auct_time=time_spent;
+        auct_dist=mind[last];
+        dist=auct_dist;
     }
     else
     {
         log(INFO, -1, "Dijkstra execution time: %f s", time_spent);
         dijk_time=time_spent;
+        dijk_dist=mind[last];
+        dist=dijk_dist;
     }
-    
-    dist=mind[last];
 
     if (dist != INT_MAX)
     {
         log(INFO, -1, "Minimum distance from node 0 to node %d equals %d", last, dist);
-        log(TEST, -1, "Dist: %d", dist);
         valid=1;
     }
     else
@@ -106,7 +109,7 @@ int main (int argc, char **argv )
         if(valid > 0)
         {
             runAlgorithm(AUCTION);
-            log(TEST, -1, "%d\t%d\t%d\t%f\t%f", vertex_count, edge_count, max_weight, dijk_time, auct_time);
+            log(TEST, -1, "%d\t%d\t%d\t%d\t%d\t%f\t%f", vertex_count, edge_count, max_weight, dijk_dist, auct_dist, dijk_time, auct_time);
         }
 
     }

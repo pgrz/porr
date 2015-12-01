@@ -5,9 +5,10 @@ DEPS =$(wildcard *.h)
 OBJS=$(SRCS:.c=.o)
 
 EXE=program
+BUILDDIR=../build
 
-CFLAGS  += -fopenmp -g
-LDFLAGS += -fopenmp -g
+CFLAGS  += -fopenmp -O0
+LDFLAGS += -fopenmp -O0
 
 all : $(EXE)
 	$(info make $@ for $(EXE)...)
@@ -17,6 +18,10 @@ $(EXE) : $(OBJS)
 
 %.o : %.c $(DEPS)
 	@$(CC) $(CFLAGS) -c $<
+
+install:
+	$(info make $@ for $(EXE)...)
+	@cp $(EXE) $(BUILDDIR)
 
 clean:
 	$(info make $@ for $(EXE)...)
