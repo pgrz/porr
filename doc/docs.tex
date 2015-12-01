@@ -21,7 +21,22 @@ Zdecydowano o realizacji zadania przy pomocy technologii OpenMP.
 
 \section{Implementacja}
 
-Program został napisany w języku C.
+Program został napisany w języku C przy wykorzystaniu interfejsu programowania aplikacji \emph{OpenMP} (ang. ..\emph{Open Multi-Processing}''), który wspiera tworzenie aplikacji na systemy wieloprocesorowe z pamięcią współdzieloną.
+
+Na cały program składają się:
+\begin{itemize}
+    \item Generator grafów
+    \item Algorytm Dijkstry
+    \item Algorytm Aukcyjny
+\end{itemize}
+
+Implemementacje generatora grafów oraz algorytmu Dijkstry opierają się na kodzie znalezionym w internecie, natomiast algorytm aukcyjny został zaimplementowany na potrzeby projektu od zera. 
+
+Współbieżna implementacja algorytmu aukcyjnego wyznaczenia najkrótszej ścieżki w grafie oparta jest o artykuł \cite{TODO}. W standardowej wersji algorytm ten ma za zadanie znaleźć tylko jedną, najkrótszą ścieżkę pomiędzy dwoma wybranymi wierzchołkami grafu przestrzegając prostych zasad podczas poruszania się po nim. Taką wersję algorytmu trudno jest jednak zrównoleglić. Algorytm aukcyjny bardzo dobrze zrównolegla się, gdy zamiast skupienia się na szukaniu ścieżki między parą wierzchołków, rozpatrujemy przypadek szukania najkrótszych ścieżek prowadzących do jednego wierzchołka-celu wychodząc z wielu innych wierzchołków.
+
+Sekwencyjna wersja algorytmu polega na iteracyjnym budowaniu listy wierzchołków, które składają sie na szukaną najkrótszą ścieżkę. Poza listą wierzchołków utrzymywany jest też wektor cen/kosztów wierzchołków. W każdej iteracji, w zależności od wyniku porównania kosztu ostatniego wierzchołka na liście z minimalną sumą kosztu wierzchołka sąsiedniego oraz wagi krawędzi do niego prowadzącej, do listy albo dodawany jest kolejny wierzchołek-sąsiad, albo z listy usuwany jest ostatni wierzchołek i uaktualniany jset wektor cen/kosztów. Wykonując kolejne iteracje algorytm zbliża się do szukanego wierzchołka i przerywany jest w momencie, gdy go znajdzie. W przypadku gdy nie istnieje żadna ścieżka prowadząca z wierzchołka początkowego do wierzchołka końcowego, algorytm będzie zapętlony w nieskończoność, a koszty wierzchołków będą dążyły do nieskończoności.
+
+Gdy rozpatrzymy problem szukania ścieżek wychodzących z wielu wierzchołków, a kończących się w jednym wybranym wierzchołku, algorytm aukcyjny bardzo dobrze się zrównolega. Jedno z rozwiązań problemu zasugerowane w artykule \cite{TODO} przewiduje wspólną syncrhoniczną pracę wielu wątków/procesów nad jednym współdzielonym wektorem kosztów. Każdy wątek odpowiada za szukanie ścieżki rozpoczynającej się w wybranym wierzchołku porównując odpowiadający sobie koszt z sumami kosztów i wag krawędzi prowadzących do wierzchołków sąsiednich, a po zakończeniu iteracji, wyniki poszczególnych wątków są przetwarzane w celu budowania wspólnego wektora kosztów. Autor artykułu zauważa, że jeżeli jakiś wierzchołek jest w danej iteracji ostatnim wierzchołkiem kilku list wierzchołków pochodzących z różnych ,,punktów startowych'', to wynik iteracji w każdym z tych wątków będzie taki sam - czyli takie samo wydłużenie, bądź skrócenie listy wierzchołków. Nie wystąpią więc problemy z wyścigami pomiędzy wątkami. Jedyna sytuacja, w której może powstać konflikt, to sytuacja gdy pewien wierzchołek jest ostatnim wierzchołkiem listy jednego wątku, a dopiero ma stać się ostatnim wierzchołkiem innego. W przypadku, gdy okaże się, że wynikiem iteracji pierwszego wątku ma być skrócenie listy wierzchołków i zwiększenie kosztu rozpatrywanego wierzchołka, to operacja wydłużenia listy drugiego wątku powinna zostać wstrzymana do czasu kolejnej iteracji.
 
 \subsection{Argumenty wywołania}
 
