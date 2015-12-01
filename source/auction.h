@@ -1,3 +1,11 @@
+/**
+ * PORR - Projekt - Etap 1
+ * Michał Cybulski, Piotr Grzegorski
+ *
+ * auction.h - Plik nagłówkowy z deklaracją struktur listy wierzchołków i
+ * funkcji do obsługi algorytmu aukcyjnego.
+ */
+
 #ifndef __AUCTION_H__
 #define __AUCTION_H__
 

@@ -1,3 +1,12 @@
+/**
+ * PORR - Projekt - Etap 1
+ * Michał Cybulski, Piotr Grzegorski
+ *
+ * auction.c - Główny plik z implementacją funkcji związanych z obsługą listy
+ * wierzchołków oraz z implementacją współbieżnego algorytmu aukcyjnego przy
+ * wykorzystaniu API OpenMP.
+ */
+
 #include "auction.h"
 #include "utils.h"
 

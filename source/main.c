@@ -1,3 +1,15 @@
+/**
+ * PORR - Projekt - Etap 1
+ * Michał Cybulski, Piotr Grzegorski
+ *
+ * main.c - Główny plik programu i zarazem entry-point.
+ *
+ * Przy pomocy innych modułów odpowiada za:
+ * 1. Wygenerowanie grafu o podanych parametrach.
+ * 2. Uruchomienie algorytmu Dijkstry na wygenerowanym grafie.
+ * 3. Uruchomienie algorytmu aukcyjnego na wygenerowanym grafie.
+ */
+
 #include <time.h>
 #include <limits.h>
 
