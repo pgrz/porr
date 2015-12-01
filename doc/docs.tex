@@ -16,13 +16,13 @@
 
 \section {Zadanie}
 
-Wyznaczanie najkrótszej ścieżki w grafie metodą aukcyjną, porównanie z algorytmem Dijkstry.
+Zrównoleglone wyznaczanie najkrótszej ścieżki w grafie metodą aukcyjną oraz porównanie z algorytmem Dijkstry.
 
 Zdecydowano o realizacji zadania przy pomocy technologii OpenMP.
 
 \section{Implementacja}
 
-Program został napisany w języku C przy wykorzystaniu interfejsu programowania aplikacji \emph{OpenMP} (ang. ..\emph{Open Multi-Processing}''), który wspiera tworzenie aplikacji na systemy wieloprocesorowe z pamięcią współdzieloną.
+Program został napisany w języku C przy wykorzystaniu interfejsu programowania aplikacji \emph{OpenMP} (ang. \emph{Open Multi-Processing}), który wspiera tworzenie aplikacji na systemy wieloprocesorowe z pamięcią współdzieloną.
 
 Na cały program składają się:
 \begin{itemize}
@@ -49,11 +49,11 @@ Dodatkowy, opcjonalny parametr to poziom logowania. Na potrzeby testów można p
 
 \subsection{Przebieg działania programu}
 
-Generuj --> wywołaj Dijkstrę --> jeśli graf niespojny odrzucamy wynik, jesli spojny wywołaj aukcyjny --> end
+Generuj graf $\Rightarrow$ Wywołaj algorytm Dijkstry $\Rightarrow$ Jeśli graf jest niespójny odrzucamy wynik, w przeciwnym wypadku wywołaj algorytm aukcyjny. $\Rightarrow$ Koniec.
 
 \subsection{Zrównoleglenie algorytmu Dijkstry}
 
-Każdy wątek sprawdza odległość dla podległych sobie wierzchołków.
+Zrównoleglenie algorytmu Dijkstry polega na przydzieleniu każdemu z wątków puli wierzchołków. W każdej iteracji etap wybrania aktualnie najkrótszej ścieżki opiera się na sprawdzeniu każdej możliwej -- i w tym momencie odpowiedni wątek sprawdza tylko podlegającą mu pulę wierzchołków. Potem informacje są synchronizowane i rozpoczyna się kolejna iteracja.
 
 \subsection{Sekwencyjny algorytm aukcyjny}
 
@@ -79,37 +79,38 @@ W toku testowania wykazano, że wpływ na wydajność programu miały niejawne s
 
 \subsection{Wyniki czasowe}
 
+Mierzony czas wywołania to czas procesora. Czasy należy więc przedzielić przez liczbę wątków, by otrzymać czasy rzeczywiste. Tabelka z pomiarami rzeczywistymi znajduje się niżej.
 
+\begin{figure}[H]
+\centering
 \begin{tabular}{r|cc|cc}
  & \multicolumn{2}{c}{Jeden wątek}  & \multicolumn{2}{c}{Cztery wątki} \\
 L. wierzch. & Dijkstry & aukcyjny & Dijkstry & aukcyjny \\
 \hline
 100   & 0,0001 & 0,0023 & 0,0011 & 0,0058 \\
 1000  & 0,0072 & 0,3744 & 0,0101 & 0,3851 \\
-10000 & 0,8392 & 28,058035 & 0,8705 & 27,994989  
+10000 & 0,8392 & 28,0580 & 0,8705 & 27,9950  
 \end{tabular}
+\caption{Tabelka median czasów procesora}
+\end{figure}
 
-Tabela znormalizowana:
-
+\begin{figure}[H]
+\centering
 \begin{tabular}{r|cc|cc}
  & \multicolumn{2}{c}{Jeden wątek}  & \multicolumn{2}{c}{Cztery wątki} \\
 L. wierzch. & Dijkstry & aukcyjny & Dijkstry & aukcyjny \\
 \hline
 100   & 0,0001 & 0,0023 & 0,0003 & 0,0015 \\
 1000  & 0,0072 & 0,3744 & 0,0025 & 0,0963 \\
-10000 & 0,8392 & 28,058035 & 0,2176 & 6,9987
+10000 & 0,8392 & 28,0580 & 0,2176 & 6,9988
 \end{tabular}
-
-\subsection{Analiza wyników}
-
-Wbrew przewidywaniom wydajność spadła po zrównolegleniu obliczeń. Dla dużych grafów różnica w czasie wykonania była nieduża, dla małych -- nawet dziesięciokrotna. Profilowanie przy pomocy programu gprof ujawniło duży narzut spowodowany oczekiwaniem na barierach OpenMP -- mechanizm ten jest stosowany w obu algorytmach.
+\caption{Tabelka median czasów rzeczywistych}
+\end{figure}
 
 \section{Wnioski}
 
-Gorsze wyniki wydajnościowe uzyskiwane po zrównolegleniu wykonania obliczeń mogą oczywiście świadczyć o defektach kodu algorytmu, jednak 
+Zgodnie z oczekiwaniami wydajność po zrównolegleniu obliczeń wzrosła dla nietrywialnych przypadków. Przy małych grafach narzut na synchronizację kilku wątków (widniejące w logach profilera czasy oczekiwania na barierach OpenMP -- \verb|gomp_team_barrier_wait_end| oraz \verb|gomp_barrier_wait_end|) dominowały nad czasem obliczeń.
 
-
-KURWA NO NIE, to algorytmy są sekwencyjne i chuj, tej wersji bede sie trzymał
 
 \begin{thebibliography}{9}
 
