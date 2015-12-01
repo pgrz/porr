@@ -7,8 +7,8 @@ OBJS=$(SRCS:.c=.o)
 EXE=program
 BUILDDIR=../build
 
-CFLAGS  += -fopenmp -O0
-LDFLAGS += -fopenmp -O0
+CFLAGS  += -fopenmp
+LDFLAGS += -fopenmp
 
 all : $(EXE)
 	$(info make $@ for $(EXE)...)
