@@ -62,7 +62,7 @@ void free_path(AuctionPath *ap) {
 }
 
 int find_nearest_neighbour(int adj[vertex_count][vertex_count],
-                           int *price_v,
+                           volatile int *price_v,
                            int node_id) {
     int min_value = INT_MAX;
     int min_dest_node;
@@ -105,10 +105,11 @@ int *auction_distance (int adj[vertex_count][vertex_count], int destination_node
     // tablica przechowująca informacje o węzłach, które zostały usunięte ze ścieżek
     // w wyniku ostatniej iteracji
     volatile int *contracted;
+    volatile int threads_finished = 0;
     int i;
 
     /* minimalne odległości od wybranego węzła do całej reszty */
-    volatile int *mind;
+    int *mind;
 
     log(INFO, -1, "Beginning of auction distance");
 
@@ -125,7 +126,7 @@ int *auction_distance (int adj[vertex_count][vertex_count], int destination_node
 
     /* początek algorytmu */
     # pragma omp parallel \
-    shared(adj, destination_node, mind, price_v, contracted) \
+    shared(adj, destination_node, mind, price_v, contracted, threads_finished) \
     private(i)
     {
         int thread_num = omp_get_thread_num();
@@ -140,9 +141,10 @@ int *auction_distance (int adj[vertex_count][vertex_count], int destination_node
 
         // sprawdzanie odległości kolejnych wierzchołków od celu
         for (i = my_first; i <= my_last; i++) {
+            int destination_node_pass = 0;
             if (i == destination_node) {
                 /* nie wyliczamy odległości od destination_node, do siebie samej */
-                continue;
+                destination_node_pass = 1;
             }
 
             log(DEBUG, thread_num, "Looking for paths for node: %d", i);
@@ -152,9 +154,14 @@ int *auction_distance (int adj[vertex_count][vertex_count], int destination_node
             int current_node = i;
             int result_length = 0;
 
-            int running = 1;
+            int finished_iteration = 0;
+            int finished_everything = 0;
             auctionPath = create_new_path(current_node);
-            while (running) {
+            while (!finished_iteration 
+                    || (finished_iteration 
+                        && finished_everything 
+                        && threads_finished < thread_count)) {
+                log(DEBUG, -1, "Thread finish: %d, thread count: %d", threads_finished, thread_count);
                 int action_already_done = 0;
                 int current_node = auctionPath->last->id;
                 int nearest_neighbour = find_nearest_neighbour(adj, price_v, current_node);
@@ -177,7 +184,9 @@ int *auction_distance (int adj[vertex_count][vertex_count], int destination_node
                 # pragma omp critical
                 {
                     log(DEBUG, thread_num, "Critical section");
-                    if (price_v[current_node] < dest_value) {
+                    if (price_v[current_node] < dest_value 
+                            && !destination_node_pass
+                            && !finished_iteration) {
                         action_already_done = 1;
                         log(DEBUG, thread_num, "Contracting!");
                         price_v[current_node] = dest_value;
@@ -195,22 +204,28 @@ int *auction_distance (int adj[vertex_count][vertex_count], int destination_node
                 # pragma omp barrier
                 log(DEBUG, thread_num, "Finished waiting on second barrier");
 
-                // nie występują tu operacje uaktualniania wektora cen, nie potrzeba
-                // sekcji krytycznej
-                if (price_v[current_node] >= dest_value 
-                        && !contracted[nearest_neighbour] 
-                        && !action_already_done) {
-                    log(DEBUG, thread_num, "Extending to node: %d", nearest_neighbour);
-                    add_node(auctionPath, nearest_neighbour);   
-                    if (nearest_neighbour == destination_node) {
-                        // znaleziony koniec - wychodzimy z pętli while
-                        running = 0;
+                // sekcja krytyczna ze względu na zliczanie skończonych prac
+                # pragma omp critical
+                {
+                    if (price_v[current_node] >= dest_value 
+                            && !contracted[nearest_neighbour] 
+                            && !action_already_done
+                            && !finished_iteration) {
+                        log(DEBUG, thread_num, "Extending to node: %d", nearest_neighbour);
+                        add_node(auctionPath, nearest_neighbour);   
                     }
-                } else {
-                    log(DEBUG, -1, "DEBUGGING: %d >= %d, contracted: %d, action: %d",
-                            price_v[current_node], dest_value, contracted[nearest_neighbour], action_already_done);
+                    if (nearest_neighbour == destination_node
+                            || destination_node_pass) {
+                        // znaleziony koniec - wychodzimy z pętli while
+                        finished_iteration = 1;
+                        if (i == my_last && !finished_everything) {
+                            log(DEBUG, thread_num, "Thread finished everything. Should wait for rest");
+                            threads_finished++;
+                            finished_everything = 1;
+                        }
+                    }
                 }
-
+                
                 // przed wyczyszczeniem tablicy contracted trzeba się upewnić, że już
                 // nie będzie używana 
                 log(DEBUG, thread_num, "Waiting on third barrier");
@@ -219,21 +234,20 @@ int *auction_distance (int adj[vertex_count][vertex_count], int destination_node
 
                 # pragma omp single
                 {
-                    log(DEBUG, thread_num, "cleaning contracted!");
                     zero_memory(contracted, vertex_count);
-                    log(DEBUG, thread_num, "contracted: %d", contracted[nearest_neighbour]);
                 }
             }
 
             AuctionPathNode *capn = auctionPath->first;
-            while (1) {
+            int finish = 0;
+            while (!finish) {
                 AuctionPathNode *apn = capn->next;
                 if (apn == 0) {
-                    break;
+                    finish = 1;
+                } else {
+                    result_length += adj[capn->id][apn->id];
+                    capn = apn;
                 }
-
-                result_length += adj[capn->id][apn->id];
-                capn = apn;
             }
             // nie wystąpią wyścigi - każdy wątek pisze pod własną komórkę pamięci
             mind[i] = result_length;
@@ -244,10 +258,15 @@ int *auction_distance (int adj[vertex_count][vertex_count], int destination_node
 
             free_path(auctionPath);
         }
+
+        log(DEBUG, thread_num, "Waiting on last barrier");
+        # pragma omp barrier
+        log(DEBUG, thread_num, "Passed last barrier");
     }
     
     
     /* zwalnianie pamięci wektora kosztów */
+    log(DEBUG, -1, "Freeing!");
     free(price_v);
     free(contracted);
 
