@@ -5,6 +5,7 @@
 \usepackage {graphicx}
 \usepackage{indentfirst}
 \usepackage[utf8]{inputenc}
+\usepackage{multirow}
 
 \author {Michał Cybulski, Piotr Grzegorski}
 \title {PORR -- Projekt\\Etap 1.}
@@ -79,6 +80,25 @@ W toku testowania wykazano, że wpływ na wydajność programu miały niejawne s
 \subsection{Wyniki czasowe}
 
 
+\begin{tabular}{r|cc|cc}
+ & \multicolumn{2}{c}{Jeden wątek}  & \multicolumn{2}{c}{Cztery wątki} \\
+L. wierzch. & Dijkstry & aukcyjny & Dijkstry & aukcyjny \\
+\hline
+100   & 0,0001 & 0,0023 & 0,0011 & 0,0058 \\
+1000  & 0,0072 & 0,3744 & 0,0101 & 0,3851 \\
+10000 & 0,8392 & 28,058035 & 0,8705 & 27,994989  
+\end{tabular}
+
+Tabela znormalizowana:
+
+\begin{tabular}{r|cc|cc}
+ & \multicolumn{2}{c}{Jeden wątek}  & \multicolumn{2}{c}{Cztery wątki} \\
+L. wierzch. & Dijkstry & aukcyjny & Dijkstry & aukcyjny \\
+\hline
+100   & 0,0001 & 0,0023 & 0,0003 & 0,0015 \\
+1000  & 0,0072 & 0,3744 & 0,0025 & 0,0963 \\
+10000 & 0,8392 & 28,058035 & 0,2176 & 6,9987
+\end{tabular}
 
 \subsection{Analiza wyników}
 
