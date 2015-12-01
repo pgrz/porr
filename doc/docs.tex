@@ -56,33 +56,25 @@ Gdy rozpatrzymy problem szukania ścieżek wychodzących z wielu wierzchołków,
 
 \section{Testy}
 
-\subsection{Jakość zrównoleglenia}
+Testy obu algorytmów wykonywano dla tych samych grafów -- zarówno generowanych losowo, jak i ze stałym ziarnem losowości. Wywołania sekwencyjne pozwoliło zrealizować ustawienie zmiennej środowiskowej \verb|OMP_NUM_THREADS| na wartość 1. Testy były wykonywane w pętli po 1000 uruchomień (wyjątek stanowią testy dla grafów o 10000 wierzchołków -- te uruchamiane były po 500 razy).
 
-Testy wywołań sekwencyjnych wykonano przez ustawienie zmiennej środowiskowej sterującej OpenMP:
+Wynik testu stanowiła mediana czasu wykonania -- pozwoliło to ograniczyć wpływ sytuacji wyjątkowych, np. dodatkowego chwilowego obciążenia systemu, na uzyskane rezultaty.
 
-\begin{verbatim}
-export OMP_NUM_THREADS=1
-\end{verbatim}
+W toku testowania wykazano, że wpływ na wydajność programu miały niejawne synchronizacje na funkcji logującej, zdecydowano więc o wykomentowaniu jej wywołań na potrzeby testowania. Poniższe wyniki uzyskano po poprawce.
 
-Zgodnie z przewidywaniami w obu wypadkach wydajność wzrosła po zrównolegleniu obliczeń. Efekty były bardziej wyraźne dla algorytmu ........................
-
-\paragraph{Dijkstra}
-
-%tabelka wyników
-
-\paragraph{Aukcyjny}
-
-%tabelka wyników
+\subsection{Wyniki czasowe}
 
 
-\subsection{Porównanie algorytmów}
 
-Algorytmy były wykonywane dla tych samych grafów, grafy generowane w rozmiarach A, B i C po 100 razy.
+\subsection{Analiza wyników}
 
-%tabelka wyników
+Wbrew przewidywaniom wydajność spadła po zrównolegleniu obliczeń. Dla dużych grafów różnica w czasie wykonania była nieduża, dla małych -- nawet dziesięciokrotna. Profilowanie przy pomocy programu gprof ujawniło duży narzut spowodowany oczekiwaniem na barierach OpenMP -- mechanizm ten jest stosowany w obu algorytmach.
 
 \section{Wnioski}
 
+Gorsze wyniki wydajnościowe uzyskiwane po zrównolegleniu wykonania obliczeń mogą oczywiście świadczyć o defektach kodu algorytmu, jednak 
 
+
+KURWA NO NIE, to algorytmy są sekwencyjne i chuj, tej wersji bede sie trzymał
 
 \end {document}
