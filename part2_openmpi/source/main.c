@@ -2,10 +2,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "utils.h"
+
 int main(int argc, char *argv[])
 {
     int tid,nprocs;
     char *cpuname;
+
+    log(DEBUG, -1, "%s", "Init");
 
     MPI_Init(&argc, &argv);
 
@@ -15,9 +19,11 @@ int main(int argc, char *argv[])
     cpuname = (char*)calloc(80, sizeof(char));
     gethostname(cpuname,80);
 
-    printf("Process %i of %i on machine %s\n", tid, nprocs, cpuname);
+    log(DEBUG, tid, "Successfully started job %i of %i on %s", tid, nprocs, cpuname);
 
     MPI_Finalize();
+
+    log(DEBUG, tid, "Full stop in %i", tid);
 
     return 0;
 }
