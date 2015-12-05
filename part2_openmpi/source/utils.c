@@ -10,23 +10,9 @@ LogLevel level=DEBUG;
 void _proxy_log(LogLevel msglev, int id, const char *fmt, ...)
 {
     va_list arg;
-    char colbuf[10] = "\0";
     char buffer[1024];
 
-    if(level == TEST)
-    {
-        if(msglev == TEST)
-        {
-            va_start(arg, fmt);
-            vsnprintf(buffer, sizeof buffer, fmt, arg);
-            va_end(arg);
-
-            printf("%s", buffer);
-        }
-        return;
-    }
-
-    if(msglev > level)
+    if(msglev > level || (level == TEST && msglev != TEST))
     {
         return;
     }
@@ -35,12 +21,7 @@ void _proxy_log(LogLevel msglev, int id, const char *fmt, ...)
     vsnprintf(buffer, sizeof buffer, fmt, arg);
     va_end(arg);
 
-    if (++id != 0)
-    {
-        sprintf(colbuf, "\x1B[3%dm", id);
-    }
-
-    printf("%s%s\033[0m", colbuf, buffer);
+    printf("%s\n", buffer);
 }
 
 char *trim (char *s)
