@@ -17,7 +17,7 @@ void random_graph()
 
     if ( ( adj_matrix = ( int * ) calloc( vertex_count * vertex_count, sizeof( int ) ) ) == NULL )
     {
-        log(ERROR, -1, "Not enough room for this size graph");
+        log_e(tid, "Not enough room for this size graph");
         return;
     }
 
@@ -59,9 +59,9 @@ void print_graph()
 {
     int i, j, index;
 
-    log(INFO, -1,  "Vertices: %d", vertex_count);
-    log(INFO, -1,  "Edges:    %d", edge_count );
-    log(INFO, -1,  "------------");
+    log_d(tid,  "Vertices: %d", vertex_count);
+    log_d(tid,  "Edges:    %d", edge_count );
+    log_d(tid,  "------------");
 
     //char format[1024];
     //char num[32];
@@ -78,12 +78,12 @@ void print_graph()
             index = i  * vertex_count + j ;
             if ( adj_matrix[ index ] != INT_MAX )
             {
-                log(INFO, -1, "%d --- %d : %d", i, j, adj_matrix[ index ] );
+                log_d(tid, "%d --- %d : %d", i, j, adj_matrix[ index ] );
             }
         }
     }
 /*
-    log(INFO, -1, "--------------------");
+    log_d(tid, "--------------------");
     for ( i = 0; i < vertex_count; i++ )
     {
         strcpy(format, "");
@@ -102,7 +102,7 @@ void print_graph()
             }
 
         }
-        log(INFO, -1, "%s", format );
+        log_d(tid, "%s", format );
     }
     */
 }

@@ -1,27 +1,125 @@
-#include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <mpi.h>
+#include <limits.h>  // for INT_MAX
 
 #include "utils.h"
+#include "generator.h"
+#include "dijkstra.h"
 
-int main(int argc, char *argv[])
+typedef enum {
+AUCTION, DIJKSTRA
+} Algorithm;
+
+void usage(void)
 {
-    int tid,nprocs;
-    char *cpuname;
+    log_i(tid, "Usage: program VERTICES EDGES MAXWEIGHT [LOGLEVEL]");
+    exit(1);
+}
 
+void runAlgorithm(Algorithm a)
+{
+    int *mind;
+//    clock_t beg, end;
+ //   double time_spent;
+    int last, dist;
+
+    last=vertex_count - 1;
+
+   // beg = clock();
+    if(a == AUCTION)
+    {
+        //mind = auction_distance ( adj_matrix, 0 );
+    }
+    else
+    {
+        mind = dijkstra_distance ( adj_matrix );
+    }
+  //  end = clock();
+  //  time_spent = (double)(end - beg) / CLOCKS_PER_SEC;
+
+    if(a == AUCTION)
+    {
+    //    log(INFO, -1, "Auction execution time: %f s", time_spent);
+    //    auct_time=time_spent;
+    //    auct_dist=mind[last];
+        //dist=auct_dist;
+    }
+    else
+    {
+      //  log(INFO, -1, "Dijkstra execution time: %f s", time_spent);
+     //   dijk_time=time_spent;
+     //   dijk_dist=mind[last];
+     //   dist=dijk_dist;
+    }
+
+    dist = mind[last];
+
+    if (dist != INT_MAX)
+    {
+        log_i(tid, "Minimum distance from node 0 to node %d equals %d", last, dist);
+        //valid=1;
+    }
+    else
+    {
+        log_i( tid,  "Can't reach node %d from node 0!", last);
+    }
+
+    free ( mind );
+}
+int main (int argc, char **argv )
+{
     MPI_Init(&argc, &argv);
 
     MPI_Comm_rank(MPI_COMM_WORLD, &tid);
-    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+    MPI_Comm_size(MPI_COMM_WORLD, &ntasks);
+    
+    if (argc < 4 || argc > 5)
+    {
+        usage();
+    }
 
-    cpuname = (char*)calloc(80, sizeof(char));
-    gethostname(cpuname,80);
+    vertex_count=str2int(argv[1]);
+    edge_count=str2int(argv[2]);
+    max_weight=str2int(argv[3]);
+    
+    if(argc == 5)
+    {
+        int il = str2int(argv[4]);
+        if((il >= ERROR && il <= DEBUG) || (il == TEST))
+        {
+            level = il;
+        }
+    }
 
-    log_d(tid, "Successfully started job %i of %i on %s", tid, nprocs, cpuname);
+    //Seed init
+    srand( ( unsigned short ) time( NULL ) );
+
+    //Fix imbalanced graph
+    max_edges = (vertex_count * ( vertex_count - 1 )) / 2;
+    edge_count = (edge_count > max_edges) ?  max_edges : edge_count;
+
+    random_graph();
+
+    if(adj_matrix != 0)
+    {
+        print_graph();
+
+        runAlgorithm(DIJKSTRA);
+
+    }
+    else
+    {
+        log_w( tid, "Graph not generated!");
+    }
+
+
+    //char *cpuname;
+
+    //cpuname = (char*)calloc(80, sizeof(char));
+   // gethostname(cpuname,80);
 
     MPI_Finalize();
-
-    log_d(tid, "Full stop in %i on %s", tid, cpuname);
 
     return 0;
 }

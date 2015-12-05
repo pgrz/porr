@@ -29,4 +29,6 @@ void _proxy_log(const LogLevel level, const int id, const char *fmt, ...)
 #define log_e(id, fmt, ...) log(ERROR, id, fmt, ##__VA_ARGS__)
 #define log_t(id, fmt, ...) _proxy_log(TEST, id, "T%d: "fmt, id, ##__VA_ARGS__)
 
+int tid,ntasks;
+
 #endif //__UTILS_H__
