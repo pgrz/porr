@@ -43,16 +43,16 @@ int *dijkstra_distance ( int ohd[vertex_count][vertex_count] )
 
         MPI_Allreduce(my_min, all_min, 1, MPI_2INT, MPI_MINLOC, MPI_COMM_WORLD);
 
-        if ( all_min[1] != - 1 )
+        tid == 0 ? log_i(tid, "Common minimal node %d with distance %d", all_min[1], all_min[0]) : 0 ;
+
+        if ( all_min[1] != -1 )
         {
+            tid == 0 ? log_d(tid, "Connecting node %d", all_min[1]) : 0 ;
+
             connected[all_min[1]] = 1;
             update_mind ( my_min[1], connected, ohd, mind);
         }
 
-        if(tid == 0)
-        {
-            log_d(tid, "Connecting node %d", all_min[1]);
-        }
     }
 
     free ( connected );

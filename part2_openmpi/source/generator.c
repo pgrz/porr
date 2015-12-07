@@ -15,12 +15,6 @@ void random_graph()
 {
     int i, j, count, weight;
 
-    if ( ( adj_matrix = ( int * ) calloc( vertex_count * vertex_count, sizeof( int ) ) ) == NULL )
-    {
-        log_e(tid, "Not enough room for this size graph");
-        return;
-    }
-
     for(i=0; i<vertex_count; i++)
         for(j=0; j<vertex_count; j++)
         {
@@ -52,7 +46,6 @@ void random_graph()
         }
     }
 
-//    free( adj_matrix );
 }
 
 void print_graph()
