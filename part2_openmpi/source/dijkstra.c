@@ -11,8 +11,9 @@ int *dijkstra_distance ( int ohd[vertex_count][vertex_count] )
     int i;
     int my_min[2];
     int all_min[2];
-    int *mind;
+    int *mind, *commonmind;
     int nth;
+    int rc;
 
     connected = ( int * ) malloc ( vertex_count * sizeof ( int ) );
 
@@ -23,6 +24,7 @@ int *dijkstra_distance ( int ohd[vertex_count][vertex_count] )
     }
 
     mind = ( int * ) malloc ( vertex_count * sizeof ( int ) );
+    commonmind = ( int * ) malloc ( vertex_count * sizeof ( int ) );
 
     for ( i = 0; i < vertex_count; i++ )
     {
@@ -41,7 +43,11 @@ int *dijkstra_distance ( int ohd[vertex_count][vertex_count] )
 
         find_nearest ( mind, connected, my_min );
 
-        MPI_Allreduce(my_min, all_min, 1, MPI_2INT, MPI_MINLOC, MPI_COMM_WORLD);
+        if(MPI_Allreduce(my_min, all_min, 1, MPI_2INT, MPI_MINLOC, MPI_COMM_WORLD) != MPI_SUCCESS)
+        {
+            log_e(tid, "MPI_Allreduce failed!");
+            //TODO obsłużyć błąd!
+        }
 
         tid == 0 ? log_i(tid, "Common minimal node %d with distance %d", all_min[1], all_min[0]) : 0 ;
 
@@ -50,14 +56,29 @@ int *dijkstra_distance ( int ohd[vertex_count][vertex_count] )
             tid == 0 ? log_d(tid, "Connecting node %d", all_min[1]) : 0 ;
 
             connected[all_min[1]] = 1;
-            update_mind ( my_min[1], connected, ohd, mind);
+            update_mind ( all_min[1], connected, ohd, mind);
         }
+        
+        if(MPI_Allreduce(mind, commonmind, vertex_count, MPI_INT, MPI_MIN, MPI_COMM_WORLD) != MPI_SUCCESS)
+        {
+            log_e(tid, "MPI_Allreduce failed!");
+            //TODO obsłużyć błąd!
+        }
+
+        for ( i = 0; i < vertex_count; i++ )
+        {
+            mind[i] = commonmind[i];
+        }
+
+
+        //MPI_Barrier(MPI_COMM_WORLD);
 
     }
 
     free ( connected );
+    free ( mind );
 
-    return mind;
+    return commonmind;
 }
 
 void find_nearest ( int mind[vertex_count], int connected[vertex_count], int *my_min )
@@ -66,8 +87,6 @@ void find_nearest ( int mind[vertex_count], int connected[vertex_count], int *my
 
     my_min[0] = INT_MAX;
     my_min[1] = -1;
-
-    log_d(tid, "Initial distance: %d, initial closest: %d", my_min[0], my_min[1]);
 
     for ( i = my_first; i <= my_last; i++ )
     {
@@ -95,6 +114,7 @@ void update_mind ( int mv, int connected[vertex_count], int ohd[vertex_count][ve
             {
                 if ( mind[mv] + ohd[mv][i] < mind[i] )
                 {
+                    log_i(tid, "Updating mind[%d] from %d to %d", i, mind[i], mind[mv] + ohd[mv][i]);
                     mind[i] = mind[mv] + ohd[mv][i];
                 }
             }
