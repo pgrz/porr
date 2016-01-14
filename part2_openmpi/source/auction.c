@@ -234,7 +234,7 @@ int *auction_distance (int adj[vertex_count][vertex_count], int destination_node
                 log_d(tid, "Extending to node: %d", nearest_neighbour);
                 add_node(auctionPath, nearest_neighbour);   
             }
-            if (nearest_neighbour == destination_node
+            if (auctionPath->last->id == destination_node
                     || destination_node_pass) {
                 // znaleziony koniec - wychodzimy z pętli while
                 finished_iteration = 1;
@@ -260,9 +260,24 @@ int *auction_distance (int adj[vertex_count][vertex_count], int destination_node
         while (!finish) {
             AuctionPathNode *apn = capn->next;
             if (apn == 0) {
+                /*
+                 * TODO - usunąć po testach
+                 */
+                if (auctionPath->last->id == destination_node 
+                        && auctionPath->first->id == vertex_count - 1) {  
+                    log_d(tid, "%d", capn->id);
+                } 
                 finish = 1;
             } else {
                 result_length += adj[capn->id][apn->id];
+                /*
+                 * TODO - usunąć po testach 
+                 * W razie potrzby debuggowania
+                 **/
+                if (auctionPath->last->id == destination_node
+                        && auctionPath->first->id == vertex_count - 1) {
+                    log_d(tid ,"%d -(%d)->", capn->id, adj[capn->id][apn->id]);
+                } 
                 capn = apn;
             }
         }

@@ -112,6 +112,7 @@ int main (int argc, char **argv )
     {
         //Seed init
         srand( ( unsigned short ) time( NULL ) );
+        srand( ( unsigned short ) 889 );
 
         //Fix imbalanced graph
         max_edges = (vertex_count * ( vertex_count - 1 )) / 2;
