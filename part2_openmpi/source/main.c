@@ -6,6 +6,7 @@
 #include "utils.h"
 #include "generator.h"
 #include "dijkstra.h"
+#include "auction.h"
 
 typedef enum {
 AUCTION, DIJKSTRA
