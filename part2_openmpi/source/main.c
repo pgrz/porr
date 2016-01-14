@@ -31,7 +31,7 @@ void runAlgorithm(Algorithm a)
    // beg = clock();
     if(a == AUCTION)
     {
-        //mind = auction_distance ( adj_matrix, 0 );
+        mind = auction_distance ( adj_matrix, 0 );
     }
     else
     {
@@ -129,6 +129,7 @@ int main (int argc, char **argv )
     if(adj_matrix != 0)
     {
         runAlgorithm(DIJKSTRA);
+        //runAlgorithm(AUCTION);
     }
     else
     {

@@ -71,7 +71,7 @@ void free_path(AuctionPath *ap) {
 }
 
 int find_nearest_neighbour(int adj[vertex_count][vertex_count],
-                           volatile int *price_v,
+                           int *price_v,
                            int node_id) {
     int min_value = INT_MAX;
     int min_dest_node;
@@ -99,7 +99,7 @@ int find_nearest_neighbour(int adj[vertex_count][vertex_count],
     return min_dest_node;
 }
 
-void zero_memory(volatile int *array, int size) {
+void zero_memory(int *array, int size) {
     int i;
 
     for (i = 0; i < size; i++) {
@@ -107,7 +107,7 @@ void zero_memory(volatile int *array, int size) {
     }
 }
 
-void max_memory(volatile int *array, int size) {
+void max_memory(int *array, int size) {
     int i;
 
     for (i = 0; i < size; i++) {
@@ -115,29 +115,44 @@ void max_memory(volatile int *array, int size) {
     }
 }
 
+void copy_array(int *src, int *dest, int size) {
+    int i;
+
+    for (i = 0; i < size; i++) {
+        dest[i] = src[i];
+    }
+}
+
 int *auction_distance (int adj[vertex_count][vertex_count], int destination_node)
 {
     // wektor kosztów/cen
-    volatile int *price_v;
+    int *price_v;
+    int *common_price_v;
     // tablica przechowująca informacje o węzłach, które zostały usunięte ze ścieżek
     // w wyniku ostatniej iteracji
-    volatile int *contracted;
-    volatile int threads_finished = 0;
+    int *contracted;
+    int *common_contracted;
+    int threads_finished = 0;
     int i;
 
     /* minimalne odległości od wybranego węzła do całej reszty */
     int *mind;
+    int *common_mind;
 
     log_i(tid, "Beginning of auction distance");
 
     /* inicjalizacja wspólnego wektora kosztów */
-    price_v = (volatile int *) malloc ( vertex_count * sizeof(int));
+    price_v = (int *) malloc ( vertex_count * sizeof(int));
+    common_price_v = (int *) malloc ( vertex_count * sizeof(int));
     zero_memory(price_v, vertex_count);
+    zero_memory(common_price_v, vertex_count);
 
-    contracted = (volatile int *) malloc(vertex_count * sizeof(int));
+    contracted = (int *) malloc(vertex_count * sizeof(int));
+    common_contracted = (int *) malloc(vertex_count * sizeof(int));
     zero_memory(contracted, vertex_count);
 
-    mind = (volatile int *) malloc ( vertex_count * sizeof(int)); 
+    mind = (int *) malloc ( vertex_count * sizeof(int)); 
+    common_mind = (int *) malloc ( vertex_count * sizeof(int));
     max_memory(mind, vertex_count);
 
     /* początek algorytmu */
@@ -146,7 +161,7 @@ int *auction_distance (int adj[vertex_count][vertex_count], int destination_node
     int nodes_processed = 0;
 
     log_d(tid, "Thread %d/%d started! Processing nodes: %d-%d", 
-            tid, ntasks, my_first, my_last);
+            tid + 1, ntasks, my_first, my_last);
 
     // sprawdzanie odległości kolejnych wierzchołków od celu
     for (i = my_first; i <= my_last; i++) {
@@ -180,71 +195,64 @@ int *auction_distance (int adj[vertex_count][vertex_count], int destination_node
             log_d(tid, "Nearest neighbour: %d", nearest_neighbour);
             log_d(tid, "Destination value: %d", dest_value);
 
-            // wszystkie wątki muszą skończyć iterację, a dopiero później możemy
-            // synchronizować wektor kosztów/cen
-            log(DEBUG, thread_num, "Waiting on first barrier");
-# pragma omp barrier
-            log(DEBUG, thread_num, "Finished waiting on first barrier");
-
             // w pierwszej kolejności wykonać się muszą wszystkie skracania
             // ścieżek P, gdyż tylko one mogą powodać konflikty przy uaktualnieniu
-            // wektora kosztów/cen. Każda operacja pisząca po wektorze cen musi
-            // znaleźć się w sekcji krytycznej
-# pragma omp critical
-            {
-                log(DEBUG, thread_num, "Critical section");
-                if (price_v[current_node] < dest_value 
-                        && !destination_node_pass
-                        && !finished_iteration) {
-                    action_already_done = 1;
-                    log(DEBUG, thread_num, "Contracting!");
-                    price_v[current_node] = dest_value;
-                    // oznaczenie węzła jako usuniętego z którejś ścieżki P
-                    contracted[current_node] = 1;
-                    if (current_node != auctionPath->first->id) {
-                        remove_last_node(auctionPath);
-                    }
-                }
-                log(DEBUG, thread_num, "Finishing critical section");
-            }
-            // musimy być pewni, że wszystkie wątki, które miały usunąć węzły
-            // ze swoich ścieżek już to zrobiły
-            log(DEBUG, thread_num, "Waiting on second barrier");
-# pragma omp barrier
-            log(DEBUG, thread_num, "Finished waiting on second barrier");
-
-            // sekcja krytyczna ze względu na zliczanie skończonych prac
-# pragma omp critical
-            {
-                if (price_v[current_node] >= dest_value 
-                        && !contracted[nearest_neighbour] 
-                        && !action_already_done
-                        && !finished_iteration) {
-                    log(DEBUG, thread_num, "Extending to node: %d", nearest_neighbour);
-                    add_node(auctionPath, nearest_neighbour);   
-                }
-                if (nearest_neighbour == destination_node
-                        || destination_node_pass) {
-                    // znaleziony koniec - wychodzimy z pętli while
-                    finished_iteration = 1;
-                    if (i == my_last && !finished_everything) {
-                        log(DEBUG, thread_num, "Thread finished everything. Should wait for rest");
-                        threads_finished++;
-                        finished_everything = 1;
-                    }
+            // wektora kosztów/cen
+            if (price_v[current_node] < dest_value 
+                    && !destination_node_pass
+                    && !finished_iteration) {
+                action_already_done = 1;
+                log_d(tid, "Contracting!");
+                price_v[current_node] = dest_value;
+                // oznaczenie węzła jako usuniętego z którejś ścieżki P
+                contracted[current_node] = 1;
+                if (current_node != auctionPath->first->id) {
+                    remove_last_node(auctionPath);
                 }
             }
 
-            // przed wyczyszczeniem tablicy contracted trzeba się upewnić, że już
-            // nie będzie używana 
-            log(DEBUG, thread_num, "Waiting on third barrier");
-# pragma omp barrier
-            log(DEBUG, thread_num, "Finished waiting on third barrier");
+            // po ewentualnym usunięciu ze ścieżek węzłów można synchronizować
+            // wektory cen i informacje o usuniętych węzłach
+            if(MPI_Allreduce(price_v, common_price_v, vertex_count, MPI_INT, MPI_MAX, MPI_COMM_WORLD) != MPI_SUCCESS)
+            {                                                                       
+                log_e(tid, "MPI_Allreduce failed!");                                
+                //TODO obsłużyć błąd!                                               
+            } 
+            copy_array(common_price_v, price_v, vertex_count);
 
-# pragma omp single
-            {
-                zero_memory(contracted, vertex_count);
+            if(MPI_Allreduce(contracted, common_contracted, vertex_count, MPI_INT, MPI_MAX, MPI_COMM_WORLD) != MPI_SUCCESS)
+            {                                                                       
+                log_e(tid, "MPI_Allreduce failed!");                            
+                //TODO obsłużyć błąd!                                               
+            }                                                                   
+            copy_array(common_contracted, contracted, vertex_count);  
+
+            if (price_v[current_node] >= dest_value 
+                    && !contracted[nearest_neighbour] 
+                    && !action_already_done
+                    && !finished_iteration) {
+                log_d(tid, "Extending to node: %d", nearest_neighbour);
+                add_node(auctionPath, nearest_neighbour);   
             }
+            if (nearest_neighbour == destination_node
+                    || destination_node_pass) {
+                // znaleziony koniec - wychodzimy z pętli while
+                finished_iteration = 1;
+                if (i == my_last && !finished_everything) {
+                    log_d(tid, "Thread finished everything. Should wait for rest");
+                    finished_everything = 1;
+                }
+            }
+
+            // synchronizacja informacji o ukończeniu pracy 
+            if(MPI_Allreduce(&finished_everything, &threads_finished, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD) != MPI_SUCCESS)
+            {                                                                   
+                log_e(tid, "MPI_Allreduce failed!");                            
+                //TODO obsłużyć błąd!                                               
+            }    
+
+            // czyszczenie informacji o węzłach usuniętych w tym kroku
+            zero_memory(contracted, vertex_count);
         }
 
         AuctionPathNode *capn = auctionPath->first;
@@ -258,11 +266,11 @@ int *auction_distance (int adj[vertex_count][vertex_count], int destination_node
                 capn = apn;
             }
         }
-        // nie wystąpią wyścigi - każdy wątek pisze pod własną komórkę pamięci
+        // zapisanie wyniku dla badanego węzła
         mind[i] = result_length;
 
         nodes_processed++;
-        log(DEBUG, thread_num, "Finished looking for path for node: %d. It was %d/%d.",
+        log_d(tid, "Finished looking for path for node: %d. It was %d/%d.",
                 i, nodes_processed, my_last - my_first + 1);
 
         free_path(auctionPath);
@@ -273,7 +281,14 @@ int *auction_distance (int adj[vertex_count][vertex_count], int destination_node
     free(price_v);
     free(contracted);
 
-    return mind;
+    if(MPI_Allreduce(mind, common_mind, vertex_count, MPI_INT, MPI_MIN, MPI_COMM_WORLD) != MPI_SUCCESS)
+    {                                                                   
+        log_e(tid, "MPI_Allreduce failed!");                            
+        //TODO obsłużyć błąd!                                               
+    } 
+    free(mind);
+
+    return common_mind;
 }
 
 
