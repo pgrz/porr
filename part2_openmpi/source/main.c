@@ -2,11 +2,19 @@
 #include <stdlib.h>
 #include <mpi.h>
 #include <limits.h>  // for INT_MAX
+#include <time.h>
 
 #include "utils.h"
 #include "generator.h"
 #include "dijkstra.h"
 #include "auction.h"
+
+int valid=0;
+double dijk_time=0.0;
+double auct_time=0.0;
+int dijk_dist=0;
+int auct_dist=0;
+int all_valid=0;
 
 typedef enum {
 AUCTION, DIJKSTRA
@@ -22,13 +30,14 @@ void usage(void)
 void runAlgorithm(Algorithm a)
 {
     int *mind;
-//    clock_t beg, end;
- //   double time_spent;
+    clock_t beg, end;
+    double time_spent;
     int last, dist;
 
     last=vertex_count - 1;
 
-   // beg = clock();
+    beg = clock();
+
     if(a == AUCTION)
     {
         mind = auction_distance ( adj_matrix, 0 );
@@ -37,32 +46,34 @@ void runAlgorithm(Algorithm a)
     {
         mind = dijkstra_distance ( adj_matrix );
     }
-  //  end = clock();
-  //  time_spent = (double)(end - beg) / CLOCKS_PER_SEC;
 
-    if(a == AUCTION)
+    end = clock();
+    time_spent = (double)(end - beg) / CLOCKS_PER_SEC;
+
+    dist = mind[last];
+    if(dist != INT_MAX)
     {
-    //    log(INFO, -1, "Auction execution time: %f s", time_spent);
-    //    auct_time=time_spent;
-    //    auct_dist=mind[last];
-        //dist=auct_dist;
-    }
-    else
-    {
-      //  log(INFO, -1, "Dijkstra execution time: %f s", time_spent);
-     //   dijk_time=time_spent;
-     //   dijk_dist=mind[last];
-     //   dist=dijk_dist;
+        valid=1;
     }
 
     if (tid == 0)
     {
-        dist = mind[last];
+        if(a == AUCTION)
+        {
+            log_i(tid, "Auction execution time: %f s", time_spent);
+            auct_time=time_spent;
+            auct_dist=dist;
+        }
+        else
+        {
+            log_i(tid, "Dijkstra execution time: %f s", time_spent);
+            dijk_time=time_spent;
+            dijk_dist=dist;
+        }
 
         if (dist != INT_MAX)
         {
             log_i(tid, "Minimum distance from node 0 to node %d equals %d", last, dist);
-            //valid=1;
         }
         else
         {
@@ -112,7 +123,7 @@ int main (int argc, char **argv )
     {
         //Seed init
         srand( ( unsigned short ) time( NULL ) );
-        srand( ( unsigned short ) 889 );
+        //srand( ( unsigned short ) 889 );
 
         //Fix imbalanced graph
         max_edges = (vertex_count * ( vertex_count - 1 )) / 2;
@@ -126,22 +137,22 @@ int main (int argc, char **argv )
     log_i(tid, "Broadcasting adj_matrix...");
     MPI_Bcast(&adj_matrix[0], vertex_count * vertex_count, MPI_INT, 0, MPI_COMM_WORLD);
     log_i(tid, "Done!");
+    MPI_Barrier( MPI_COMM_WORLD );
 
     if(adj_matrix != 0)
     {
         runAlgorithm(DIJKSTRA);
-        //runAlgorithm(AUCTION);
+        if(valid > 0)
+        {
+            MPI_Barrier( MPI_COMM_WORLD );
+            runAlgorithm(AUCTION);
+            (tid == 0) ? log_t(-1,"%d\t%d\t%d\t%d\t%d\t%f\t%f", vertex_count, edge_count, max_weight, dijk_dist, auct_dist, dijk_time, auct_time) : 0 ;
+        }
     }
     else
     {
         log_i( tid, "Graph not generated!");
     }
-
-
-    //char *cpuname;
-
-    //cpuname = (char*)calloc(80, sizeof(char));
-   // gethostname(cpuname,80);
 
     MPI_Finalize();
 

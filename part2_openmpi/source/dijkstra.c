@@ -69,10 +69,6 @@ int *dijkstra_distance ( int ohd[vertex_count][vertex_count] )
         {
             mind[i] = commonmind[i];
         }
-
-
-        //MPI_Barrier(MPI_COMM_WORLD);
-
     }
 
     free ( connected );
