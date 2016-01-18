@@ -151,16 +151,16 @@ int *auction_distance (int adj[vertex_count][vertex_count], int destination_node
     common_contracted = (int *) malloc(vertex_count * sizeof(int));
     zero_memory(contracted, vertex_count);
 
-    mind = (int *) malloc ( vertex_count * sizeof(int)); 
+    mind = (int *) malloc ( vertex_count * sizeof(int));
     common_mind = (int *) malloc ( vertex_count * sizeof(int));
     max_memory(mind, vertex_count);
 
     /* początek algorytmu */
-    int my_first = (tid * vertex_count) / ntasks;                    
-    int my_last = ((tid + 1) * vertex_count) / ntasks - 1;  
+    int my_first = (tid * vertex_count) / ntasks;
+    int my_last = ((tid + 1) * vertex_count) / ntasks - 1;
     int nodes_processed = 0;
 
-    log_d(tid, "Thread %d/%d started! Processing nodes: %d-%d", 
+    log_d(tid, "Thread %d/%d started! Processing nodes: %d-%d",
             tid + 1, ntasks, my_first, my_last);
 
     // sprawdzanie odległości kolejnych wierzchołków od celu
@@ -181,9 +181,9 @@ int *auction_distance (int adj[vertex_count][vertex_count], int destination_node
         int finished_iteration = 0;
         int finished_everything = 0;
         auctionPath = create_new_path(current_node);
-        while (!finished_iteration 
-                || (finished_iteration 
-                    && finished_everything 
+        while (!finished_iteration
+                || (finished_iteration
+                    && finished_everything
                     && threads_finished < ntasks)) {
             log_d(tid, "Thread finish: %d, thread count: %d", threads_finished, ntasks);
             int action_already_done = 0;
@@ -198,7 +198,7 @@ int *auction_distance (int adj[vertex_count][vertex_count], int destination_node
             // w pierwszej kolejności wykonać się muszą wszystkie skracania
             // ścieżek P, gdyż tylko one mogą powodać konflikty przy uaktualnieniu
             // wektora kosztów/cen
-            if (price_v[current_node] < dest_value 
+            if (price_v[current_node] < dest_value
                     && !destination_node_pass
                     && !finished_iteration) {
                 action_already_done = 1;
@@ -213,26 +213,22 @@ int *auction_distance (int adj[vertex_count][vertex_count], int destination_node
 
             // po ewentualnym usunięciu ze ścieżek węzłów można synchronizować
             // wektory cen i informacje o usuniętych węzłach
-            if(MPI_Allreduce(price_v, common_price_v, vertex_count, MPI_INT, MPI_MAX, MPI_COMM_WORLD) != MPI_SUCCESS)
-            {                                                                       
-                log_e(tid, "MPI_Allreduce failed!");                                
-                //TODO obsłużyć błąd!                                               
-            } 
+            if(MPI_Allreduce(price_v, common_price_v, vertex_count, MPI_INT, MPI_MAX, MPI_COMM_WORLD) != MPI_SUCCESS) {
+                log_e(tid, "MPI_Allreduce failed!");
+            }
             copy_array(common_price_v, price_v, vertex_count);
 
-            if(MPI_Allreduce(contracted, common_contracted, vertex_count, MPI_INT, MPI_MAX, MPI_COMM_WORLD) != MPI_SUCCESS)
-            {                                                                       
-                log_e(tid, "MPI_Allreduce failed!");                            
-                //TODO obsłużyć błąd!                                               
-            }                                                                   
-            copy_array(common_contracted, contracted, vertex_count);  
+            if(MPI_Allreduce(contracted, common_contracted, vertex_count, MPI_INT, MPI_MAX, MPI_COMM_WORLD) != MPI_SUCCESS) {
+                log_e(tid, "MPI_Allreduce failed!");
+            }
+            copy_array(common_contracted, contracted, vertex_count);
 
-            if (price_v[current_node] >= dest_value 
-                    && !contracted[nearest_neighbour] 
+            if (price_v[current_node] >= dest_value
+                    && !contracted[nearest_neighbour]
                     && !action_already_done
                     && !finished_iteration) {
                 log_d(tid, "Extending to node: %d", nearest_neighbour);
-                add_node(auctionPath, nearest_neighbour);   
+                add_node(auctionPath, nearest_neighbour);
             }
             if (auctionPath->last->id == destination_node
                     || destination_node_pass) {
@@ -244,12 +240,10 @@ int *auction_distance (int adj[vertex_count][vertex_count], int destination_node
                 }
             }
 
-            // synchronizacja informacji o ukończeniu pracy 
-            if(MPI_Allreduce(&finished_everything, &threads_finished, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD) != MPI_SUCCESS)
-            {                                                                   
-                log_e(tid, "MPI_Allreduce failed!");                            
-                //TODO obsłużyć błąd!                                               
-            }    
+            // synchronizacja informacji o ukończeniu pracy
+            if(MPI_Allreduce(&finished_everything, &threads_finished, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD) != MPI_SUCCESS) {
+                log_e(tid, "MPI_Allreduce failed!");
+            }
 
             // czyszczenie informacji o węzłach usuniętych w tym kroku
             zero_memory(contracted, vertex_count);
@@ -260,24 +254,17 @@ int *auction_distance (int adj[vertex_count][vertex_count], int destination_node
         while (!finish) {
             AuctionPathNode *apn = capn->next;
             if (apn == 0) {
-                /*
-                 * TODO - usunąć po testach
-                 */
-                if (auctionPath->last->id == destination_node 
-                        && auctionPath->first->id == vertex_count - 1) {  
+                if (auctionPath->last->id == destination_node
+                        && auctionPath->first->id == vertex_count - 1) {
                     log_d(tid, "%d", capn->id);
-                } 
+                }
                 finish = 1;
             } else {
                 result_length += adj[capn->id][apn->id];
-                /*
-                 * TODO - usunąć po testach 
-                 * W razie potrzby debuggowania
-                 **/
                 if (auctionPath->last->id == destination_node
                         && auctionPath->first->id == vertex_count - 1) {
                     log_d(tid ,"%d -(%d)->", capn->id, adj[capn->id][apn->id]);
-                } 
+                }
                 capn = apn;
             }
         }
@@ -297,10 +284,9 @@ int *auction_distance (int adj[vertex_count][vertex_count], int destination_node
     free(contracted);
 
     if(MPI_Allreduce(mind, common_mind, vertex_count, MPI_INT, MPI_MIN, MPI_COMM_WORLD) != MPI_SUCCESS)
-    {                                                                   
-        log_e(tid, "MPI_Allreduce failed!");                            
-        //TODO obsłużyć błąd!                                               
-    } 
+    {
+        log_e(tid, "MPI_Allreduce failed!");
+    }
     free(mind);
 
     return common_mind;

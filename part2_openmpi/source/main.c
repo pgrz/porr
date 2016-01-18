@@ -115,7 +115,6 @@ int main (int argc, char **argv )
     {
         log_e(tid, "Not enough room for this size graph");
 
-        //TODO MPI FATAL ERROR
         exit(2);
     }
     

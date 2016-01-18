@@ -46,7 +46,6 @@ int *dijkstra_distance ( int ohd[vertex_count][vertex_count] )
         if(MPI_Allreduce(my_min, all_min, 1, MPI_2INT, MPI_MINLOC, MPI_COMM_WORLD) != MPI_SUCCESS)
         {
             log_e(tid, "MPI_Allreduce failed!");
-            //TODO obsłużyć błąd!
         }
 
         tid == 0 ? log_i(tid, "Common minimal node %d with distance %d", all_min[1], all_min[0]) : 0 ;
@@ -62,7 +61,6 @@ int *dijkstra_distance ( int ohd[vertex_count][vertex_count] )
         if(MPI_Allreduce(mind, commonmind, vertex_count, MPI_INT, MPI_MIN, MPI_COMM_WORLD) != MPI_SUCCESS)
         {
             log_e(tid, "MPI_Allreduce failed!");
-            //TODO obsłużyć błąd!
         }
 
         for ( i = 0; i < vertex_count; i++ )
