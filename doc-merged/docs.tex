@@ -1,0 +1,185 @@
+\documentclass {report}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage {polski}
+\usepackage {float}
+\usepackage {graphicx}
+\usepackage{indentfirst}
+\usepackage[utf8]{inputenc}
+\usepackage{multirow}
+
+\author {Michał Cybulski, Piotr Grzegorski}
+\title {PORR -- Projekt\\Etap 1.}
+\date {1. grudnia 2015r.}
+\begin {document}
+
+\maketitle
+
+\tableofcontents
+
+\chapter{Wstęp}
+
+\section{Zadanie}
+
+Zadanie polegało na zaimplementowaniu zrównoleglonego algorytmu wyznaczania najkrótszej ścieżki w~grafie metodą aukcyjną, a następnie porównanie jego wydajności ze zrównoleglonym algorytmem Dijkstry.
+
+Zadanie podzielone było na dwa etapy:
+\begin{enumerate}
+	\item Implementacja równoległa na maszyny z pamięcią wspólną -- zdecydowano się wykorzystać technologię \emph{OpenMP}.
+	\item Implementacja równoległa na maszyny z pamięcią lokalną -- zdecydowano się wykorzystać technologię \emph{Open MPI}.
+\end{enumerate}
+
+\section{Ogólne założenia implementacyjne}
+
+Programy zostały napisane w~języku C przy wykorzystaniu interfejsów programowania aplikacji:
+\begin{itemize}
+	\item \emph{OpenMP} (ang. \emph{Open Multi-Processing}), który wspiera tworzenie aplikacji na systemy wieloprocesorowe z~pamięcią współdzieloną
+	\item \emph{Open MPI} (ang. \emph{Open Message Passing Interface}), który wspiera tworzenie aplikacji na systemy wieloprocesorowe z~pamięcią lokalną
+\end{itemize}
+
+Ze względów na duże różnice obsługi obu bibliotek w kodzie, aby zwiększyć czytelność wydzielone zostały dwa programy, po jednym dla każdej z implementacji. Oba programy poza różnicami wynikającymi z wykorzystania innych technologii są jednak zbudowane bardzo podobnie.
+
+Na oba programy składają się:
+\begin{itemize}
+    \item Generator grafów
+    \item Algorytm Dijkstry
+    \item Algorytm Aukcyjny
+\end{itemize}
+
+Implementacje generatora grafów oraz algorytmu Dijkstry opierają się na kodzie znalezionym w~internecie, natomiast algorytm aukcyjny został zaimplementowany na potrzeby projektu od zera.
+
+Współbieżne implementacja algorytmu aukcyjnego wyznaczenia najkrótszej ścieżki w~grafie oparta jest o artykuł \cite{Bertsekas1991}. W~standardowej wersji algorytm ten ma za zadanie znaleźć tylko jedną, najkrótszą ścieżkę pomiędzy dwoma wybranymi wierzchołkami grafu przestrzegając prostych zasad podczas poruszania się po~nim. Taką wersję algorytmu trudno jest jednak zrównoleglić. Algorytm aukcyjny bardzo dobrze zrównolegla się, gdy zamiast skupienia się na szukaniu ścieżki między parą wierzchołków, rozpatrujemy przypadek szukania najkrótszych ścieżek prowadzących do jednego wierzchołka-celu wychodząc z wielu innych wierzchołków. Poszczególne wątki/procesy mogą niezależnie zajmować się wyszukiwaniem najkrótszych ścieżek zaczynających się w różnych wierzchołkach, pracując jednak wspólnie nad wektorem cen/kosztów wierzchołków, która raz wyliczona może być uniwersalnie używana dla danego grafu, dzięki czemu wspólna zrównoleglona praca może zakończyć się znacznie szybciej niż praca sekwencyjna.
+
+\subsection{Argumenty wywołania}
+
+Aplikacje w obu implementacjach wymagają trzech liczbowych parametrów:
+
+\begin{enumerate}
+ \item liczba wierzchołków grafu
+ \item liczba krawędzi grafu
+ \item maksymalna waga krawędzi
+\end{enumerate}
+
+Dodatkowy, opcjonalny parametr to poziom logowania. Na potrzeby testów można podać wartość 10, która zaskutkuje wypisaniem tylko jednej linii podsumowania zawierającej same liczby.
+
+\subsection{Przebieg działania programu}
+
+Generuj graf $\Rightarrow$ Wywołaj algorytm Dijkstry $\Rightarrow$ Jeśli graf jest niespójny odrzucamy wynik, w~przeciwnym wypadku wywołaj algorytm aukcyjny. $\Rightarrow$ Koniec.
+
+\subsection{Sekwencyjny algorytm aukcyjny}
+
+Sekwencyjna wersja algorytmu opisana w~książce \cite{Bertsekas1998} polega na iteracyjnym budowaniu listy wierzchołków, które składają się na szukaną najkrótszą ścieżkę. Poza listą wierzchołków utrzymywany jest też wektor cen/kosztów wierzchołków.
+
+W każdej iteracji, w~zależności od wyniku porównania kosztu ostatniego wierzchołka na liście z minimalną sumą kosztu wierzchołka sąsiedniego oraz wagi krawędzi do niego prowadzącej, do listy albo dodawany jest kolejny wierzchołek-sąsiad, albo z listy usuwany jest ostatni wierzchołek i uaktualniany jest wektor cen/kosztów. Wykonując kolejne iteracje algorytm zbliża się do szukanego wierzchołka i przerywany jest w~momencie, gdy go znajdzie. W~przypadku gdy nie istnieje żadna ścieżka prowadząca z wierzchołka początkowego do wierzchołka końcowego, algorytm będzie zapętlony w~nieskończoność, a koszty wierzchołków będą dążyły do nieskończoności.
+
+\chapter{Implementacja \emph{OpenMP}}
+
+\section{Zrównoleglenie algorytmów}
+
+\subsection{Algorytm Dijkstry}
+
+Zrównoleglenie algorytmu Dijkstry polega na przydzieleniu każdemu z wątków puli wierzchołków. W~każdej iteracji etap wybrania aktualnie najkrótszej ścieżki opiera się na sprawdzeniu każdej możliwej -- i~w~tym momencie odpowiedni wątek sprawdza tylko podlegającą mu pulę wierzchołków. Potem informacje są synchronizowane i rozpoczyna się kolejna iteracja.
+
+\subsection{Algorytm aukcyjny}
+
+Gdy rozpatrzymy problem szukania ścieżek wychodzących z wielu wierzchołków, a kończących się w~jednym wybranym wierzchołku, algorytm aukcyjny bardzo dobrze się zrównolega. Jedno z rozwiązań problemu zasugerowane w~artykule \cite{Bertsekas1991} przewiduje wspólną synchroniczną pracę wielu wątków/procesów nad jednym współdzielonym wektorem kosztów.
+
+Każdy wątek odpowiada za szukanie ścieżki rozpoczynającej się w~wybranym wierzchołku porównując odpowiadający sobie koszt z sumami kosztów i wag krawędzi prowadzących do wierzchołków sąsiednich, a~po~zakończeniu iteracji, wyniki poszczególnych wątków są przetwarzane w~celu budowania wspólnego wektora kosztów. Autor artykułu zauważa, że jeżeli jakiś wierzchołek jest w~danej iteracji ostatnim wierzchołkiem kilku list wierzchołków pochodzących z różnych ,,punktów startowych'', to wynik iteracji w~każdym z tych wątków będzie taki sam - czyli takie samo wydłużenie, bądź skrócenie listy wierzchołków. Nie wystąpią więc problemy z wyścigami pomiędzy wątkami.
+
+Jedyna sytuacja, w~której może powstać konflikt, to sytuacja gdy pewien wierzchołek jest ostatnim wierzchołkiem listy jednego wątku, a dopiero ma stać się ostatnim wierzchołkiem innego. W~przypadku, gdy okaże się, że wynikiem iteracji pierwszego wątku ma być skrócenie listy wierzchołków i zwiększenie kosztu rozpatrywanego wierzchołka, to operacja wydłużenia listy drugiego wątku powinna zostać wstrzymana do czasu kolejnej iteracji.
+
+\section{Testy}
+
+Testy obu algorytmów wykonywano dla tych samych grafów -- zarówno generowanych losowo, jak i~ze~stałym ziarnem losowości. Wywołania sekwencyjne pozwoliło zrealizować ustawienie zmiennej środowiskowej \verb|OMP_NUM_THREADS| na wartość 1. Testy były wykonywane w~pętli po 1000 uruchomień (wyjątek stanowią testy dla grafów o 10000 wierzchołków -- te uruchamiane były po 500 razy).
+
+Wynik testu stanowiła mediana czasu wykonania -- pozwoliło to ograniczyć wpływ sytuacji wyjątkowych, np. dodatkowego chwilowego obciążenia systemu, na uzyskane rezultaty.
+
+W toku testowania wykazano, że wpływ na wydajność programu miały niejawne synchronizacje na funkcji logującej, zdecydowano więc o wykomentowaniu jej wywołań na potrzeby testowania. Poniższe wyniki uzyskano po zastosowaniu obejścia.
+
+\subsection{Wyniki czasowe}
+
+Mierzony czas wywołania to liczba taktów zegara procesora przedzielona przez liczbę taktów na sekundę zdefiniowaną w systemowym makrze. Z~tego powodu otrzymane wyniki były czasami procesora, nie czasami rzeczywistymi i~należy je przedzielić przez liczbę wątków, by otrzymać czasy rzeczywiste. Wyniki uwzględniające normalizację znajdują się niżej.
+
+\begin{figure}[H]
+\centering
+\begin{tabular}{r|cc|cc}
+ & \multicolumn{2}{c}{Jeden wątek}  & \multicolumn{2}{c}{Cztery wątki} \\
+L. wierzch. & Dijkstry & aukcyjny & Dijkstry & aukcyjny \\
+\hline
+100   & 0,0001 & 0,0023 & 0,0011 & 0,0058 \\
+1000  & 0,0072 & 0,3744 & 0,0101 & 0,3851 \\
+10000 & 0,8392 & 28,0580 & 0,8705 & 27,9950  
+\end{tabular}
+\caption{Tabelka median czasów procesora}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\begin{tabular}{r|cc|cc}
+ & \multicolumn{2}{c}{Jeden wątek}  & \multicolumn{2}{c}{Cztery wątki} \\
+L. wierzch. & Dijkstry & aukcyjny & Dijkstry & aukcyjny \\
+\hline
+100   & 0,0001 & 0,0023 & 0,0003 & 0,0015 \\
+1000  & 0,0072 & 0,3744 & 0,0025 & 0,0963 \\
+10000 & 0,8392 & 28,0580 & 0,2176 & 6,9988
+\end{tabular}
+\caption{Tabelka median czasów rzeczywistych}
+\end{figure}
+
+\section{Wnioski}
+
+Zgodnie z oczekiwaniami wydajność po zrównolegleniu obliczeń wzrosła dla nietrywialnych przypadków. Przy małych grafach narzut na synchronizację kilku wątków (widniejące w~logach profilera czasy oczekiwania na barierach OpenMP -- \verb|gomp_team_barrier_wait_end| oraz \verb|gomp_barrier_wait_end|) dominowały nad czasem obliczeń.
+
+Spodziewana była również przewaga wydajnościowa algorytmu Dijkstry nad algorytmem aukcyjnym. Wynika ona z~faktu, że~algorytm aukcyjny w~swojej standardowej postaci nie jest przystosowany do~szukania najkrótszych ścieżek do~wierzchołka końcowego z~wielu wierzchołków początkowych (lub patrząc w~drugą stronę -- do~wielu wierzchołków końcowych z~jednego początkowego). Podczas gdy algorytm Dijkstry naturalnie znajduje najkrótsze ścieżki prowadzące z każdego wierzchołka, algorytm aukcyjny służy do~szukania takich ścieżek jedynie pomiędzy parą konkretnych wierzchołków.
+
+Pomimo, że zrównoleglona wersja algorytmu radziła sobie z~zadaniem wyszukiwania wielu ścieżek znacznie lepiej od wersji sekwencyjnej (działała ona dla przypadków testowych niemalże tyle razy szybciej, ile było dostępnych rdzeni procesora), to jednak przez~to, że~założenia algorytmu pozostały niezmienione, nie mógł on nawiązać wyrównanej walki z~algorytmem Dijkstry w~jego specjalności.
+
+Podczas testów algorytmów zauważono jednak, że w~przypadku próby znalezienia najkrótszej ścieżki tylko pomiędzy parą punktów (lub kilkoma/kilkunastoma parami), algorytm aukcyjny znajdował taką ścieżkę znacznie szybciej niż algorytm Dijkstry. Można więc uznać, że~oba te algorytmy mają swoje miejsce próbując rozwiązać dwa nieco inne problemy, a~wybór jednego z~nich powinien być uzależniony od potrzeby użytkownika.
+
+\chapter{Implementacja \emph{Open MPI}}
+
+\section{Zrównoleglenie algorytmów}
+
+\subsection{Algorytm Dijkstry}
+
+TODO
+
+\subsection{Algorytm aukcyjny}
+
+TODO
+
+\section{Testy}
+
+TODO
+
+\subsection{Wyniki czasowe}
+
+TODO
+
+\section{Wnioski}
+
+TODO
+
+\chapter{Podsumowanie}
+
+\section{Komentarz do wyników i wnioski}
+
+TODO
+
+\begin{thebibliography}{9}
+
+    \bibitem{Bertsekas1998}
+        Dimitri P. Bertsekas
+        \emph{Network Optimization: Continuous and Discrete Models}
+        Athena Scientific
+        1998.
+
+    \bibitem{Bertsekas1991}
+        Dimitri P. Bertsekas,
+        \emph{An Auction Algorithm For Shortest Paths}.
+        SIAM Journal on Optimization,
+        Vol. 1, No. 4, pp. 425-447
+        November 1991.
+      
+\end{thebibliography}
+
+\end {document}
