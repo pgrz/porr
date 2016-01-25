@@ -1,0 +1,16 @@
+echo $OMP_NUM_THREADS
+
+export OMP_NUM_THREADS=1
+echo $OMP_NUM_THREADS
+
+./program_omp 10 30 100 2
+
+cat source.me
+. source.me
+echo $OMP_NUM_THREADS
+
+./program_omp 10 30 100 2
+
+cat start.sh
+
+./start.sh 10 30 100 2
